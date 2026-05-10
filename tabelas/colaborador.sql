@@ -5,5 +5,6 @@ CREATE TABLE colaborador (
     telefone        VARCHAR(20)  UNIQUE,
     email           VARCHAR(255) UNIQUE NOT NULL,
     data_nascimento DATE         NOT NULL,
+    status          VARCHAR(20)  DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo')),
     id_endereco     INTEGER      NOT NULL REFERENCES endereco(id)
 );
