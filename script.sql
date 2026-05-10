@@ -97,3 +97,96 @@ CREATE TABLE transacao (
     data_tempo_transacao  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status                VARCHAR(20)              DEFAULT 'aprovada'CHECK (status IN ('aprovada', 'negada', 'estornada'))
 );
+
+
+CREATE TABLE IF NOT EXISTS log_endereco_colaborador (
+	id serial PRIMARY KEY,
+	tipo_mudanca varchar(10) NOT NULL,
+	id_colaborador integer NOT NULL,
+	id_endereco integer NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_endereco_estabelecimento (
+	id serial PRIMARY KEY,
+	tipo_mudanca varchar(10) NOT NULL,
+	id_estabelecimento integer NOT NULL,
+	id_endereco integer NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_colaborador (
+	id serial PRIMARY KEY,
+	id_colaborador integer NOT NULL,
+	tipo_mudanca varchar(10) NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	status boolean NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_status CHECK (lower(status::text) IN ('true', 'false')),
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_estabelecimento (
+	id serial PRIMARY KEY,
+	id_estabelecimento integer NOT NULL,
+	tipo_mudanca varchar(10) NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	status boolean NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_status CHECK (lower(status::text) IN ('true', 'false')),
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_cartao (
+	id serial PRIMARY KEY,
+	id_cartao integer NOT NULL,
+	tipo_mudanca varchar(255) NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	status varchar(20) NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_status CHECK (lower(status) IN ('ativo', 'inativo')),
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_cartao_categoria_beneficio (
+	id serial PRIMARY KEY,
+	id_cartao_categoria_beneficio integer NOT NULL,
+	tipo_mudanca varchar(10) NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	status varchar(20) NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_status CHECK (lower(status) IN ('ativo', 'inativo')),
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_categoria_beneficio_mcc (
+	id serial PRIMARY KEY,
+	id_categoria_beneficio_mcc integer NOT NULL,
+	tipo_mudanca varchar(255) NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE IF NOT EXISTS log_transacao (
+	id serial PRIMARY KEY,
+	id_transacao integer NOT NULL,
+	tipo_mudanca varchar(255) NOT NULL,
+	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+	usuario_responsavel varchar(20) NOT NULL,
+	status varchar(20) NOT NULL,
+	descricao text NOT NULL,
+	CONSTRAINT constraint_status CHECK (lower(status) IN ('aprovada', 'negada', 'estornada')),
+	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
