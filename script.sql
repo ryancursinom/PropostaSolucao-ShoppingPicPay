@@ -186,7 +186,7 @@ CREATE TABLE log_cartao_categoria_beneficio (
     status                            VARCHAR(20)               NOT NULL,
     descricao                         TEXT                      NOT NULL,
     CONSTRAINT constraint_status
-        CHECK (LOWER(status) IN ('ativo', 'inativo')),
+        CHECK (LOWER(status) IN ('processado', 'erro')),
     CONSTRAINT constraint_tipo_mudanca
         CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
 );
