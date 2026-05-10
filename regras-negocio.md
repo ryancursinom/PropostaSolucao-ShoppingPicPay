@@ -5,7 +5,7 @@
 Este projeto foi desenvolvido por João Pedro Souza, Lorenzo Lima
 Mariana Marrão, Matheus Rezende, Raphaely Mendes e Ryan Cursino, alunos do 2°ano G com o objetivo de simular um **Motor de Benefícios Inteligente**, onde colaboradores possuem cartões com saldos separados por categorias (alimentação, refeição e transporte) para a Disciplina de Modelagem de Dados, lecionada pelo professor Marcelo Silva.
 
-O objetivo da solução foi é ser implementada em **PostgreSQL** para aplicar conceitos de modelagem relacional, normalização, integridade referencial e automação com triggers, functions e procedures.
+O objetivo da solução foi é implementar em **PostgreSQL** os conceitos de modelagem relacional, normalização, integridade referencial e automação com triggers, functions e procedures.
 
 ---
 
@@ -158,6 +158,6 @@ O sistema atende aos requisitos mínimos obrigatórios:
 
 ---
 
-## 11. Conclusão
+## 10. Conclusão
 
 O sistema implementa um modelo robusto de gestão de benefícios corporativos, garantindo integridade dos dados, controle de regras de negócio, automação de processos financeiros, escalabilidade para ambientes corporativos reais.
