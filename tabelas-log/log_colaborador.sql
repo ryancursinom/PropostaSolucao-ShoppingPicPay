@@ -1,11 +1,13 @@
-CREATE TABLE IF NOT EXISTS log_colaborador (
-	id serial PRIMARY KEY,
-	id_colaborador integer NOT NULL,
-	tipo_mudanca varchar(10) NOT NULL,
-	data_hora_mudanca timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-	usuario_responsavel varchar(20) NOT NULL,
-	status boolean NOT NULL,
-	descricao text NOT NULL,
-	CONSTRAINT constraint_status CHECK (lower(status::text) IN ('true', 'false')),
-	CONSTRAINT constraint_tipo_mudanca CHECK (lower(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+CREATE TABLE log_colaborador (
+    id                    SERIAL                    PRIMARY KEY,
+    id_colaborador        INTEGER                   NOT NULL,
+    tipo_mudanca          VARCHAR(10)               NOT NULL,
+    data_hora_mudanca     TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
+    usuario_responsavel   VARCHAR(20)               NOT NULL,
+    status                BOOLEAN                   NOT NULL,
+    descricao             TEXT                      NOT NULL,
+    CONSTRAINT constraint_status
+        CHECK (LOWER(status::TEXT) IN ('true', 'false')),
+    CONSTRAINT constraint_tipo_mudanca
+        CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
 );
