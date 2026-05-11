@@ -215,3 +215,264 @@ CREATE TABLE log_transacao (
     CONSTRAINT constraint_tipo_mudanca
         CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
 );
+
+CREATE OR REPLACE FUNCTION fn_validar_mcc(
+    id_estabelecimento_transacao INTEGER,
+    id_cartao_transacao INTEGER
+)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    estabelecimento_mcc INTEGER;
+    categoria_mcc INTEGER;
+BEGIN
+    SELECT
+        codigo INTO estabelecimento_mcc
+    FROM estabelecimento e
+    JOIN mcc m ON m.id = e.id_mcc
+    WHERE e.id = id_estabelecimento_transacao;
+
+    SELECT
+        codigo INTO categoria_mcc
+    FROM cartao_categoria_beneficio cc
+    JOIN categoria_beneficio cb
+        ON cb.id = cc.id_categoria_beneficio
+    JOIN categoria_beneficio_mcc cbm
+        ON cbm.id_categoria = cb.id
+    JOIN mcc m
+        ON m.id = cbm.id_mcc
+       AND m.codigo = estabelecimento_mcc
+    WHERE cc.id = id_cartao_transacao;
+
+    IF categoria_mcc IS NOT NULL THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_verifica_transacao()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    mcc_valido INTEGER;
+    valor_cartao NUMERIC;
+BEGIN
+    SELECT
+        fn_validar_mcc(
+            NEW.id_estabelecimento,
+            NEW.id_cartao_categoria
+        ) INTO mcc_valido;
+
+    IF mcc_valido = 1 THEN
+        SELECT
+            saldo INTO valor_cartao
+        FROM cartao_categoria_beneficio
+        WHERE id = NEW.id_cartao_categoria;
+
+        IF valor_cartao >= NEW.valor THEN
+            RETURN NEW;
+        ELSE
+            RAISE EXCEPTION
+                'Transação negada pois você não tem saldo suficiente no cartão!';
+        END IF;
+    ELSE
+        RAISE EXCEPTION
+            'Transação negada pois o código MCC do estabelecimento e do cartão não combinam!';
+    END IF;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER trg_valida_transacao
+BEFORE INSERT ON transacao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verifica_transacao();
+
+CREATE OR REPLACE PROCEDURE proc_recarga_va()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    id_vale_alimentacao INTEGER;
+    v_id_cartao INTEGER;
+BEGIN
+    SELECT
+        id INTO id_vale_alimentacao
+    FROM categoria_beneficio
+    WHERE nome LIKE '%alimenta__o%';
+
+    FOR v_id_cartao IN
+        (
+            SELECT
+                id
+            FROM cartao_categoria_beneficio
+            WHERE id_categoria_beneficio = id_vale_alimentacao
+              AND ativo = TRUE
+        )
+    LOOP
+        BEGIN
+            UPDATE cartao_categoria_beneficio
+            SET saldo = saldo + 548.00
+            WHERE id = v_id_cartao;
+
+            INSERT INTO log_cartao_categoria_beneficio(
+                id_cartao_categoria_beneficio,
+                tipo_mudanca,
+                usuario_responsavel,
+                status,
+                descricao
+            ) VALUES (
+                v_id_cartao,
+                'UPDATE',
+                CURRENT_USER,
+                'PROCESSADO',
+                'Recarga do vale alimentação realizada.'
+            );
+
+        EXCEPTION
+            WHEN OTHERS THEN
+                INSERT INTO log_cartao_categoria_beneficio(
+                    id_cartao_categoria_beneficio,
+                    tipo_mudanca,
+                    usuario_responsavel,
+                    status,
+                    descricao
+                ) VALUES (
+                    id_cartao,
+                    'UPDATE',
+                    CURRENT_USER,
+                    'ERRO',
+                    'Erro ao realizar recarga do vale alimentação.'
+                );
+        END;
+    END LOOP;
+
+    COMMIT;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE proc_recarga_vr()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    id_vale_refeicao INTEGER;
+    v_id_cartao INTEGER;
+BEGIN
+    SELECT
+        id INTO id_vale_refeicao
+    FROM categoria_beneficio
+    WHERE nome LIKE '%refei__o%';
+
+    FOR v_id_cartao IN
+        (
+            SELECT
+                id
+            FROM cartao_categoria_beneficio
+            WHERE id_categoria_beneficio = id_vale_refeicao
+              AND ativo = TRUE
+        )
+    LOOP
+        BEGIN
+            UPDATE cartao_categoria_beneficio
+            SET saldo = saldo + 59.67
+            WHERE id = v_id_cartao;
+
+            INSERT INTO log_cartao_categoria_beneficio(
+                id_cartao_categoria_beneficio,
+                tipo_mudanca,
+                usuario_responsavel,
+                status,
+                descricao
+            ) VALUES (
+                v_id_cartao,
+                'UPDATE',
+                CURRENT_USER,
+                'PROCESSADO',
+                'Recarga do vale refeição.'
+            );
+
+        EXCEPTION
+            WHEN OTHERS THEN
+                INSERT INTO log_cartao_categoria_beneficio(
+                    id_cartao_categoria_beneficio,
+                    tipo_mudanca,
+                    usuario_responsavel,
+                    status,
+                    descricao
+                ) VALUES (
+                    id_cartao,
+                    'UPDATE',
+                    CURRENT_USER,
+                    'ERRO',
+                    'Erro ao realizar recarga do vale refeição.'
+                );
+        END;
+    END LOOP;
+
+    COMMIT;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE proc_recarga_vt()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    id_vale_transporte INTEGER;
+    v_id_cartao INTEGER;
+BEGIN
+    SELECT
+        id INTO id_vale_transporte
+    FROM categoria_beneficio
+    WHERE nome LIKE '%transporte%';
+
+    FOR v_id_cartao IN
+        (
+            SELECT
+                id
+            FROM cartao_categoria_beneficio
+            WHERE id_categoria_beneficio = id_vale_transporte
+              AND ativo = TRUE
+        )
+    LOOP
+        BEGIN
+            UPDATE cartao_categoria_beneficio
+            SET saldo = saldo + 233.20
+            WHERE id = v_id_cartao;
+
+            INSERT INTO log_cartao_categoria_beneficio(
+                id_cartao_categoria_beneficio,
+                tipo_mudanca,
+                usuario_responsavel,
+                status,
+                descricao
+            ) VALUES (
+                v_id_cartao,
+                'UPDATE',
+                CURRENT_USER,
+                'PROCESSADO',
+                'Recarga do vale transporte.'
+            );
+
+        EXCEPTION
+            WHEN OTHERS THEN
+                INSERT INTO log_cartao_categoria_beneficio(
+                    id_cartao_categoria_beneficio,
+                    tipo_mudanca,
+                    usuario_responsavel,
+                    status,
+                    descricao
+                ) VALUES (
+                    id_cartao,
+                    'UPDATE',
+                    CURRENT_USER,
+                    'ERRO',
+                    'Erro ao realizar recarga do vale transporte.'
+                );
+        END;
+    END LOOP;
+
+    COMMIT;
+END;
+$$;
