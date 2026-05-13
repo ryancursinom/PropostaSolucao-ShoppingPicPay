@@ -1,0 +1,3 @@
+CREATE OR REPLACE TRIGGER trg_log_colaborador
+AFTER INSERT OR UPDATE OR DELETE ON colaborador
+FOR EACH ROW EXECUTE FUNCTION fn_log_colaborador();
