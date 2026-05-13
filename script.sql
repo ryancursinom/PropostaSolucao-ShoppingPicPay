@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS categoria_beneficio_mcc        CASCADE;
 DROP TABLE IF EXISTS cartao_categoria_beneficio     CASCADE;
 DROP TABLE IF EXISTS transacao                      CASCADE;
 
+DROP TABLE IF EXISTS log_endereco                   CASCADE;
 DROP TABLE IF EXISTS log_endereco_colaborador       CASCADE;
 DROP TABLE IF EXISTS log_endereco_estabelecimento   CASCADE;
 DROP TABLE IF EXISTS log_colaborador                CASCADE;
@@ -111,6 +112,17 @@ CREATE TABLE transacao (
                             CHECK (status IN ('aprovada', 'negada', 'estornada'))
 );
 
+CREATE TABLE log_endereco (
+    id                    SERIAL                    PRIMARY KEY,
+    tipo_mudanca          VARCHAR(10)               NOT NULL,
+    id_endereco           INTEGER                   NOT NULL,
+    data_hora_mudanca     TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
+    usuario_responsavel   VARCHAR(20)               NOT NULL,
+    descricao             TEXT                      NOT NULL,
+    CONSTRAINT constraint_tipo_mudanca
+        CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
 CREATE TABLE log_endereco_colaborador (
     id                    SERIAL                    PRIMARY KEY,
     tipo_mudanca          VARCHAR(10)               NOT NULL,
@@ -141,13 +153,14 @@ CREATE TABLE log_colaborador (
     tipo_mudanca          VARCHAR(10)               NOT NULL,
     data_hora_mudanca     TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
     usuario_responsavel   VARCHAR(20)               NOT NULL,
-    status                BOOLEAN                   NOT NULL,
+    status                VARCHAR(20)               NOT NULL,
     descricao             TEXT                      NOT NULL,
     CONSTRAINT constraint_status
-        CHECK (LOWER(status::TEXT) IN ('true', 'false')),
+        CHECK (status IN ('ativo', 'inativo')),
     CONSTRAINT constraint_tipo_mudanca
         CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
 );
+
 
 CREATE TABLE log_estabelecimento (
     id                    SERIAL                    PRIMARY KEY,
@@ -169,10 +182,7 @@ CREATE TABLE log_cartao (
     tipo_mudanca          VARCHAR(255)              NOT NULL,
     data_hora_mudanca     TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
     usuario_responsavel   VARCHAR(20)               NOT NULL,
-    status                VARCHAR(20)               NOT NULL,
     descricao             TEXT                      NOT NULL,
-    CONSTRAINT constraint_status
-        CHECK (LOWER(status) IN ('ativo', 'inativo')),
     CONSTRAINT constraint_tipo_mudanca
         CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
 );
@@ -476,3 +486,769 @@ BEGIN
     COMMIT;
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION fn_log_cartao_categoria_beneficio()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    campo VARCHAR(50);
+    valor_antigo VARCHAR(50);
+    valor_novo VARCHAR(50);
+    descricao_log TEXT;
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_cartao_categoria_beneficio (
+            id_cartao_categoria_beneficio,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'PROCESSADO',
+            'Registro ' || NEW.id || ' inserido com status ' || NEW.ativo || ' na tabela cartao_categoria_beneficio às ' || NOW()
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        descricao_log := 'Registro ' || OLD.id || ' atualizado às ' || NOW() || '. Os seguintes campos foram atualizados:';
+
+        FOR campo, valor_antigo IN
+            SELECT *
+            FROM json_each_text(row_to_json(OLD))
+        LOOP
+
+            valor_novo := row_to_json(NEW) ->> campo;
+
+            IF valor_antigo IS DISTINCT FROM valor_novo THEN
+                descricao_log := 
+                    descricao_log || 
+                    E'\n- Campo: ' || campo || 
+                    ' -> Mudou de ' || valor_antigo || ' para ' || valor_novo || ' ';
+            END IF;
+
+        END LOOP;
+
+        INSERT INTO log_cartao_categoria_beneficio (
+            id_cartao_categoria_beneficio,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'PROCESSADO',
+            descricao_log
+
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO log_cartao_categoria_beneficio (
+            id_cartao_categoria_beneficio,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'PROCESSADO',
+            'Registro ' || OLD.id || ' deletado da tabela cartao_categoria_beneficio às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+END; $$;
+
+CREATE OR REPLACE FUNCTION fn_log_cartao()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    campo VARCHAR(50);
+    valor_antigo VARCHAR(50);
+    valor_novo VARCHAR(50);
+    descricao_log TEXT;
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_cartao (
+            id_cartao,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || NEW.id || ' inserido na tabela cartao às ' || NOW()
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        descricao_log := 'Registro ' || OLD.id || ' atualizado às ' || NOW() || '. Os seguintes campos foram atualizados:';
+
+        FOR campo, valor_antigo IN
+            SELECT *
+            FROM json_each_text(row_to_json(OLD))
+        LOOP
+
+            valor_novo := row_to_json(NEW) ->> campo;
+
+            IF valor_antigo IS DISTINCT FROM valor_novo THEN
+                descricao_log := 
+                    descricao_log || 
+                    E'\n- Campo: ' || campo || 
+                    ' -> Mudou de ' || valor_antigo || ' para ' || valor_novo || ' ';
+            END IF;
+
+        END LOOP;
+
+        INSERT INTO log_cartao (
+            id_cartao,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            descricao_log
+
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO log_cartao (
+            id_cartao,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || OLD.id || ' deletado da tabela cartao às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+END; $$;
+
+CREATE OR REPLACE FUNCTION fn_log_categoria_beneficio_mcc()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    campo VARCHAR(50);
+    valor_antigo VARCHAR(50);
+    valor_novo VARCHAR(50);
+    descricao_log TEXT;
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_categoria_beneficio_mcc (
+            id_categoria_beneficio_mcc,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || NEW.id || ' inserido na tabela categoria_beneficio_mcc às ' || NOW()
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        descricao_log := 'Registro ' || OLD.id || ' atualizado às ' || NOW() || '. Os seguintes campos foram atualizados:';
+
+        FOR campo, valor_antigo IN
+            SELECT *
+            FROM json_each_text(row_to_json(OLD))
+        LOOP
+
+            valor_novo := row_to_json(NEW) ->> campo;
+
+            IF valor_antigo IS DISTINCT FROM valor_novo THEN
+                descricao_log := 
+                    descricao_log || 
+                    E'\n- Campo: ' || campo || 
+                    ' -> Mudou de ' || valor_antigo || ' para ' || valor_novo || ' ';
+            END IF;
+
+        END LOOP;
+
+        INSERT INTO log_categoria_beneficio_mcc (
+            id_categoria_beneficio_mcc,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            descricao_log
+
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO log_categoria_beneficio_mcc (
+            id_categoria_beneficio_mcc,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || OLD.id || ' deletado da tabela categoria_beneficio_mcc às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+END; $$;
+
+CREATE OR REPLACE FUNCTION fn_log_colaborador()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    campo VARCHAR(50);
+    valor_antigo VARCHAR(50);
+    valor_novo VARCHAR(50);
+    descricao_log TEXT;
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_colaborador (
+            id_colaborador,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            NEW.status,
+            'Registro ' || NEW.id || ' inserido com status ' || NEW.status || ' na tabela colaborador às ' || NOW()
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        descricao_log := 'Registro ' || OLD.id || ' atualizado às ' || NOW() || '. Os seguintes campos foram atualizados:';
+
+        FOR campo, valor_antigo IN
+            SELECT *
+            FROM json_each_text(row_to_json(OLD))
+        LOOP
+
+            valor_novo := row_to_json(NEW) ->> campo;
+
+            IF valor_antigo IS DISTINCT FROM valor_novo THEN
+                descricao_log := 
+                    descricao_log || 
+                    E'\n- Campo: ' || campo || 
+                    ' -> Mudou de ' || valor_antigo || ' para ' || valor_novo || ' ';
+            END IF;
+
+        END LOOP;
+
+        INSERT INTO log_colaborador (
+            id_colaborador,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            NEW.status,
+            descricao_log
+
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO log_colaborador (
+            id_colaborador,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            OLD.status,
+            'Registro ' || OLD.id || ' deletado da tabela colaborador às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+END; $$;
+
+CREATE OR REPLACE FUNCTION fn_log_endereco_insert_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_endereco (
+            id_endereco,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || NEW.id ||
+            ' inserido na tabela endereco às ' || NOW()
+        );
+
+        RETURN NEW;
+        
+    ELSE
+
+        INSERT INTO log_endereco (
+            id_endereco,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || OLD.id ||
+            ' deletado da tabela endereco às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_log_endereco_update()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+
+DECLARE
+    campo                     VARCHAR(50);
+    valor_antigo              VARCHAR(50);
+    valor_novo                VARCHAR(50);
+    descricao_log             TEXT;
+    id_estabelecimento        INTEGER;
+    lista_ids_colaboradores   INTEGER[];
+    i                         INTEGER;
+
+BEGIN
+
+    descricao_log :=
+        'Registro ' || OLD.id ||
+        ' atualizado às ' || NOW() ||
+        '. Os seguintes campos foram atualizados:';
+
+
+    FOR campo, valor_antigo IN
+        SELECT *
+        FROM json_each_text(row_to_json(OLD))
+    LOOP
+
+        valor_novo := row_to_json(NEW) ->> campo;
+
+        IF valor_antigo IS DISTINCT FROM valor_novo THEN
+
+            descricao_log :=
+                descricao_log ||
+                E'\n- Campo: ' || campo ||
+                ' -> Mudou de ' || valor_antigo ||
+                ' para ' || valor_novo;
+
+        END IF;
+
+    END LOOP;
+
+
+    SELECT
+        id
+    INTO id_estabelecimento
+    FROM estabelecimento
+    WHERE id_endereco = NEW.id;
+
+
+    IF id_estabelecimento IS NOT NULL THEN
+
+        INSERT INTO log_endereco_estabelecimento (
+            id_endereco,
+            id_estabelecimento,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            id_estabelecimento,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            descricao_log
+        );
+
+    END IF;
+
+
+    SELECT
+        ARRAY_AGG(id)
+    INTO lista_ids_colaboradores
+    FROM colaborador
+    WHERE id_endereco = NEW.id;
+
+
+    IF lista_ids_colaboradores IS NOT NULL THEN
+
+        FOR i IN 1..array_length(lista_ids_colaboradores, 1)
+        LOOP
+
+            INSERT INTO log_endereco_colaborador (
+                id_endereco,
+                id_colaborador,
+                tipo_mudanca,
+                data_hora_mudanca,
+                usuario_responsavel,
+                descricao
+            )
+            VALUES (
+                NEW.id,
+                lista_ids_colaboradores[i],
+                TG_OP,
+                NOW(),
+                CURRENT_USER,
+                descricao_log
+            );
+
+        END LOOP;
+
+    END IF;
+
+
+    IF id_estabelecimento IS NULL
+    AND lista_ids_colaboradores IS NULL THEN
+
+        INSERT INTO log_endereco (
+            id_endereco,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            descricao_log
+        );
+
+    END IF;
+
+
+    RETURN NEW;
+
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_log_estabelecimento()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    campo VARCHAR(50);
+    valor_antigo VARCHAR(50);
+    valor_novo VARCHAR(50);
+    descricao_log TEXT;
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_estabelecimento (
+            id_estabelecimento,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            NEW.status,
+            'Registro ' || NEW.id || ' inserido com status ' || NEW.status || ' na tabela estabelecimento às ' || NOW()
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        descricao_log := 'Registro ' || OLD.id || ' atualizado às ' || NOW() || '. Os seguintes campos foram atualizados:';
+
+        FOR campo, valor_antigo IN
+            SELECT *
+            FROM json_each_text(row_to_json(OLD))
+        LOOP
+
+            valor_novo := row_to_json(NEW) ->> campo;
+
+            IF valor_antigo IS DISTINCT FROM valor_novo THEN
+                descricao_log := 
+                    descricao_log || 
+                    E'\n- Campo: ' || campo || 
+                    ' -> Mudou de ' || valor_antigo || ' para ' || valor_novo || ' ';
+            END IF;
+
+        END LOOP;
+
+        INSERT INTO log_estabelecimento (
+            id_estabelecimento,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            NEW.status,
+            descricao_log
+
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO log_estabelecimento (
+            id_estabelecimento,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            OLD.status,
+            'Registro ' || OLD.id || ' deletado da tabela estabelecimento às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+END; $$;
+
+CREATE OR REPLACE FUNCTION fn_log_transacao()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    campo VARCHAR(50);
+    valor_antigo VARCHAR(50);
+    valor_novo VARCHAR(50);
+    descricao_log TEXT;
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_transacao (
+            id_transacao,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            NEW.status,
+            'Registro ' || NEW.id || ' inserido com status ' || NEW.status || ' na tabela transacao às ' || NOW()
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        descricao_log := 'Registro ' || OLD.id || ' atualizado às ' || NOW() || '. Os seguintes campos foram atualizados:';
+
+        FOR campo, valor_antigo IN
+            SELECT *
+            FROM json_each_text(row_to_json(OLD))
+        LOOP
+
+            valor_novo := row_to_json(NEW) ->> campo;
+
+            IF valor_antigo IS DISTINCT FROM valor_novo THEN
+                descricao_log := 
+                    descricao_log || 
+                    E'\n- Campo: ' || campo || 
+                    ' -> Mudou de ' || valor_antigo || ' para ' || valor_novo || ' ';
+            END IF;
+
+        END LOOP;
+
+        INSERT INTO log_transacao (
+            id_transacao,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            NEW.status,
+            descricao_log
+
+        );
+
+        RETURN NEW;
+
+
+    ELSIF (TG_OP = 'DELETE') THEN
+        INSERT INTO log_transacao (
+            id_transacao,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            status,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            OLD.status,
+            'Registro ' || OLD.id || ' deletado da tabela transacao às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+END; $$;
+
+CREATE OR REPLACE TRIGGER trg_log_cartao_categoria_beneficio
+AFTER INSERT OR UPDATE OR DELETE ON cartao_categoria_beneficio
+FOR EACH ROW EXECUTE FUNCTION fn_log_cartao_categoria_beneficio();
+
+CREATE OR REPLACE TRIGGER trg_log_cartao
+AFTER INSERT OR UPDATE OR DELETE ON cartao
+FOR EACH ROW EXECUTE FUNCTION fn_log_cartao();
+
+CREATE OR REPLACE TRIGGER trg_log_categoria_beneficio_mcc
+AFTER INSERT OR UPDATE OR DELETE ON categoria_beneficio_mcc
+FOR EACH ROW EXECUTE FUNCTION fn_log_categoria_beneficio_mcc();
+
+CREATE OR REPLACE TRIGGER trg_log_colaborador
+AFTER INSERT OR UPDATE OR DELETE ON colaborador
+FOR EACH ROW EXECUTE FUNCTION fn_log_colaborador();
+
+CREATE OR REPLACE TRIGGER trg_log_endereco_insert_delete
+AFTER INSERT OR DELETE ON endereco
+FOR EACH ROW EXECUTE FUNCTION fn_log_endereco_insert_delete();
+
+CREATE OR REPLACE TRIGGER trg_log_endereco_update
+AFTER UPDATE ON endereco
+FOR EACH ROW EXECUTE FUNCTION fn_log_endereco_update();
+
+CREATE OR REPLACE TRIGGER trg_log_estabelecimento
+AFTER INSERT OR UPDATE OR DELETE ON estabelecimento
+FOR EACH ROW EXECUTE FUNCTION fn_log_estabelecimento();
+
+CREATE OR REPLACE TRIGGER trg_log_transacao
+AFTER INSERT OR UPDATE OR DELETE ON transacao
+FOR EACH ROW EXECUTE FUNCTION fn_log_transacao();
