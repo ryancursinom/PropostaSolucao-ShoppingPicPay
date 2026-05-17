@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS endereco                       CASCADE;
 DROP TABLE IF EXISTS colaborador                    CASCADE;
+DROP TABLE IF EXISTS empresa                        CASCADE;
 DROP TABLE IF EXISTS estabelecimento                CASCADE;
 DROP TABLE IF EXISTS cartao                         CASCADE;
 DROP TABLE IF EXISTS mcc                            CASCADE;
@@ -12,6 +13,8 @@ DROP TABLE IF EXISTS log_endereco                   CASCADE;
 DROP TABLE IF EXISTS log_endereco_colaborador       CASCADE;
 DROP TABLE IF EXISTS log_endereco_estabelecimento   CASCADE;
 DROP TABLE IF EXISTS log_colaborador                CASCADE;
+DROP TABLE IF EXISTS log_empresa                    CASCADE;
+DROP TABLE IF EXISTS log_empresa_estabelecimento    CASCADE;
 DROP TABLE IF EXISTS log_estabelecimento            CASCADE;
 DROP TABLE IF EXISTS log_cartao                     CASCADE;
 DROP TABLE IF EXISTS log_cartao_categoria_beneficio CASCADE;
@@ -21,7 +24,7 @@ DROP TABLE IF EXISTS log_transacao                  CASCADE;
 CREATE TABLE empresa (
     id     SERIAL       PRIMARY KEY
     ,nome   VARCHAR(60) NOT NULL
-)
+);
 
 CREATE TABLE endereco (
     id              SERIAL       PRIMARY KEY,
@@ -1295,7 +1298,7 @@ BEGIN
         ARRAY_AGG(id)
     INTO lista_ids_estabelecimento
     FROM estabelecimento
-    WHERE id_estabelecimento = OLD.id;
+    WHERE id_empresa = OLD.id;
 
 
     IF lista_ids_estabelecimento IS NOT NULL THEN
@@ -1325,8 +1328,7 @@ BEGIN
     END IF;
 
 
-    IF id_estabelecimento IS NULL
-    AND lista_ids_estabelecimento IS NULL THEN
+    IF lista_ids_estabelecimento IS NULL THEN
 
         INSERT INTO log_empresa (
             id_empresa,
@@ -1434,15 +1436,27 @@ CREATE OR REPLACE TRIGGER trg_log_transacao
 AFTER INSERT OR UPDATE OR DELETE ON transacao
 FOR EACH ROW EXECUTE FUNCTION fn_log_transacao();
 
-CREATE OR REPLACE TRIGGER trg_log_empresa
+CREATE OR REPLACE TRIGGER trg_log_empresa_insert_delete
 AFTER INSERT OR DELETE ON empresa
 FOR EACH ROW EXECUTE FUNCTION fn_log_empresa_insert_delete();
 
-CREATE OR REPLACE TRIGGER trg_log_empresa
+CREATE OR REPLACE TRIGGER trg_log_empresa_update
 AFTER UPDATE ON empresa
 FOR EACH ROW EXECUTE FUNCTION fn_log_empresa_update();
 
 BEGIN;
+
+INSERT INTO empresa (nome) VALUES ('JBS');
+INSERT INTO empresa (nome) VALUES ('PicPay');
+INSERT INTO empresa (nome) VALUES ('Banco Original');
+INSERT INTO empresa (nome) VALUES ('Flora');
+INSERT INTO empresa (nome) VALUES ('Eldorado Brasil');
+INSERT INTO empresa (nome) VALUES ('Âmbar Energia');
+INSERT INTO empresa (nome) VALUES ('Canal Rural');
+INSERT INTO empresa (nome) VALUES ('LHG Mining');
+INSERT INTO empresa (nome) VALUES ('Fluxus');
+INSERT INTO empresa (nome) VALUES ('MGAS');
+INSERT INTO empresa (nome) VALUES ('Instituto J&F');
 
 INSERT INTO mcc (codigo, descricao) VALUES (5411, 'supermercados e mercearias');
 INSERT INTO mcc (codigo, descricao) VALUES (5412, 'lojas de conveniencia e mini mercados');
@@ -3784,307 +3798,317 @@ INSERT INTO cartao_categoria_beneficio (id_cartao, id_categoria_beneficio, saldo
 INSERT INTO cartao_categoria_beneficio (id_cartao, id_categoria_beneficio, saldo, ativo) VALUES (599, 3, 399.18, FALSE);
 INSERT INTO cartao_categoria_beneficio (id_cartao, id_categoria_beneficio, saldo, ativo) VALUES (600, 3, 132.12, TRUE);
 
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('atacadao 1', '16759238319387', '21800381463', 'contato1@atacadao1.com.br', TRUE, 3, 501);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('extra supermercados 2', '92421959730940', '21852734114', 'contato2@extrasuperme.com.br', TRUE, 1, 502);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('carrefour market 3', '13315553015379', '11440778110', 'contato3@carrefourmar.com.br', TRUE, 1, 503);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('pao de acucar 4', '65984557663426', '21829912699', 'contato4@paodeacucar4.com.br', TRUE, 3, 504);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('mercado sao jorge 5', '20641910616609', '11082242168', 'contato5@mercadosaojo.com.br', TRUE, 5, 505);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado bom preco 6', '82217562699613', '91347910059', 'contato6@supermercado.com.br', TRUE, 2, 506);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('pao de acucar 7', '57228703220040', '91597243871', 'contato7@paodeacucar7.com.br', TRUE, 4, 507);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('mercado familia 8', '51452058028621', '11480224065', 'contato8@mercadofamil.com.br', TRUE, 1, 508);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('atacadao 9', '74769509041839', '61664301655', 'contato9@atacadao9.com.br', TRUE, 5, 509);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('assai atacadista 10', '23887888765667', '41136062290', 'contato10@assaiatacadi.com.br', TRUE, 5, 510);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado bom preco 11', '13860479471970', '41803514895', 'contato11@supermercado.com.br', TRUE, 5, 511);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('carrefour market 12', '82944191479043', '51728395167', 'contato12@carrefourmar.com.br', TRUE, 3, 512);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('atacadao 13', '09532670848874', '71562925822', 'contato13@atacadao13.com.br', TRUE, 4, 513);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('atacadao 14', '28018323530600', '61684676780', 'contato14@atacadao14.com.br', TRUE, 5, 514);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('extra supermercados 15', '64583744959717', '21353175559', 'contato15@extrasuperme.com.br', TRUE, 3, 515);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('mercado familia 16', '89748741148662', '81511997645', 'contato16@mercadofamil.com.br', TRUE, 2, 516);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('assai atacadista 17', '96551564196746', '71300935820', 'contato17@assaiatacadi.com.br', TRUE, 5, 517);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('pao de acucar 18', '63015972242262', '91349276680', 'contato18@paodeacucar1.com.br', TRUE, 5, 518);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado bom preco 19', '84601804033492', '21537358667', 'contato19@supermercado.com.br', TRUE, 5, 519);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('mercado familia 20', '55446053926009', '81462720536', 'contato20@mercadofamil.com.br', TRUE, 5, 520);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hortifruti natural da terra 21', '49911928567265', '11215538307', 'contato21@hortifrutina.com.br', TRUE, 5, 521);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado ideal 22', '58212626439534', '91446078907', 'contato22@supermercado.com.br', TRUE, 4, 522);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('assai atacadista 23', '19919817755154', '51414925316', 'contato23@assaiatacadi.com.br', TRUE, 2, 523);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hortifruti natural da terra 24', '98283859747794', '71590705549', 'contato24@hortifrutina.com.br', TRUE, 4, 524);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado bom preco 25', '34368771569240', '51907634153', 'contato25@supermercado.com.br', TRUE, 2, 525);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('assai atacadista 26', '77100115477310', '51314872255', 'contato26@assaiatacadi.com.br', TRUE, 3, 526);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hortifruti natural da terra 27', '85641354741690', '61739523285', 'contato27@hortifrutina.com.br', FALSE, 5, 527);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('mercado familia 28', '58095794758188', '11284136233', 'contato28@mercadofamil.com.br', TRUE, 4, 528);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado ideal 29', '47040714697104', '81341855950', 'contato29@supermercado.com.br', TRUE, 3, 529);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('supermercado bom preco 30', '37456017039617', '21759001706', 'contato30@supermercado.com.br', TRUE, 1, 530);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('extra supermercados 31', '49078692855100', '21593896763', 'contato31@extrasuperme.com.br', TRUE, 4, 531);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('extra supermercados 32', '36735589607077', '31883413351', 'contato32@extrasuperme.com.br', TRUE, 4, 532);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('carrefour market 33', '90143097427480', '71635796714', 'contato33@carrefourmar.com.br', TRUE, 5, 533);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('atacadao 34', '03007356582683', '31526379412', 'contato34@atacadao34.com.br', TRUE, 1, 534);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hortifruti natural da terra 35', '86691122321406', '31611978925', 'contato35@hortifrutina.com.br', TRUE, 2, 535);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('pao de acucar 36', '46574465325536', '21181851367', 'contato36@paodeacucar3.com.br', TRUE, 3, 536);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('pao de acucar 37', '05203881937660', '21847146220', 'contato37@paodeacucar3.com.br', TRUE, 5, 537);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('atacadao 38', '48333540112779', '41603087647', 'contato38@atacadao38.com.br', TRUE, 2, 538);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hortifruti natural da terra 39', '09067618376275', '11767162172', 'contato39@hortifrutina.com.br', TRUE, 5, 539);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('carrefour market 40', '88868041869389', '31645649674', 'contato40@carrefourmar.com.br', TRUE, 1, 540);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hamburgueria urban 41', '91605390649037', '11342519701', 'contato41@hamburgueria.com.br', TRUE, 10, 541);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('sushi express 42', '58913682967004', '31153193625', 'contato42@sushiexpress.com.br', FALSE, 9, 542);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cantina italiana 43', '60221690887518', '11293358384', 'contato43@cantinaitali.com.br', TRUE, 8, 543);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('bistro central 44', '91065735174572', '41510214012', 'contato44@bistrocentra.com.br', TRUE, 8, 544);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cafe da manha 45', '33195589799005', '81177170305', 'contato45@cafedamanha4.com.br', TRUE, 7, 545);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cantina italiana 46', '70941246051643', '41895337684', 'contato46@cantinaitali.com.br', TRUE, 8, 546);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('padaria colonial 47', '87677600643418', '81317303324', 'contato47@padariacolon.com.br', TRUE, 8, 547);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('padaria colonial 48', '67574510484833', '51731815605', 'contato48@padariacolon.com.br', TRUE, 6, 548);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('lanchonete do ze 49', '27079959476115', '11797647545', 'contato49@lanchonetedo.com.br', TRUE, 6, 549);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('sushi express 50', '72897226934892', '11390984685', 'contato50@sushiexpress.com.br', TRUE, 8, 550);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hamburgueria urban 51', '06699261382659', '11977779570', 'contato51@hamburgueria.com.br', TRUE, 10, 551);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('lanchonete do ze 52', '39962637792793', '11735128962', 'contato52@lanchonetedo.com.br', TRUE, 6, 552);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('padaria colonial 53', '06824323330216', '41446060694', 'contato53@padariacolon.com.br', TRUE, 7, 553);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('sushi express 54', '06952357865211', '21285370064', 'contato54@sushiexpress.com.br', TRUE, 10, 554);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('pizzaria bella napoli 55', '85487531198035', '61542805376', 'contato55@pizzariabell.com.br', TRUE, 8, 555);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('restaurante sabor caseiro 56', '42550786887890', '31039221317', 'contato56@restaurantes.com.br', TRUE, 9, 556);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cantina italiana 57', '19586639928717', '81287314249', 'contato57@cantinaitali.com.br', TRUE, 10, 557);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('churrascaria tres irmaos 58', '62917964416093', '31888070051', 'contato58@churrascaria.com.br', TRUE, 7, 558);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cafe da manha 59', '28745120220170', '51541648792', 'contato59@cafedamanha5.com.br', TRUE, 9, 559);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('padaria colonial 60', '10466275015281', '81442036078', 'contato60@padariacolon.com.br', TRUE, 9, 560);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('churrascaria tres irmaos 61', '54833095872347', '71806014579', 'contato61@churrascaria.com.br', TRUE, 10, 561);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cafe da manha 62', '26714858197061', '11196797209', 'contato62@cafedamanha6.com.br', TRUE, 6, 562);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('padaria colonial 63', '19201828523317', '81049379582', 'contato63@padariacolon.com.br', TRUE, 7, 563);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('padaria colonial 64', '15855116397128', '31075741424', 'contato64@padariacolon.com.br', TRUE, 8, 564);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('lanchonete do ze 65', '73962625918814', '31497736772', 'contato65@lanchonetedo.com.br', TRUE, 7, 565);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('bistro central 66', '44343549787235', '61715643802', 'contato66@bistrocentra.com.br', TRUE, 10, 566);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('restaurante sabor caseiro 67', '90348042479635', '11940916573', 'contato67@restaurantes.com.br', TRUE, 6, 567);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('bistro central 68', '24266225492004', '41091401527', 'contato68@bistrocentra.com.br', TRUE, 7, 568);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('restaurante sabor caseiro 69', '17226414756923', '21842933598', 'contato69@restaurantes.com.br', FALSE, 6, 569);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hamburgueria urban 70', '47422983596606', '21539022624', 'contato70@hamburgueria.com.br', TRUE, 9, 570);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('bistro central 71', '36500329909027', '51761442787', 'contato71@bistrocentra.com.br', TRUE, 6, 571);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('restaurante sabor caseiro 72', '55404231697919', '71754939343', 'contato72@restaurantes.com.br', TRUE, 7, 572);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('churrascaria tres irmaos 73', '69045392528785', '61733813307', 'contato73@churrascaria.com.br', TRUE, 10, 573);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('sushi express 74', '53302364122468', '11985372033', 'contato74@sushiexpress.com.br', TRUE, 9, 574);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cafe da manha 75', '51602325107141', '61870940422', 'contato75@cafedamanha7.com.br', TRUE, 8, 575);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('cafe da manha 76', '45641199255165', '41807819135', 'contato76@cafedamanha7.com.br', TRUE, 7, 576);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hamburgueria urban 77', '53494197157532', '21663282463', 'contato77@hamburgueria.com.br', TRUE, 8, 577);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('hamburgueria urban 78', '61621856352016', '71150420598', 'contato78@hamburgueria.com.br', TRUE, 6, 578);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('restaurante sabor caseiro 79', '85697714336062', '11101461039', 'contato79@restaurantes.com.br', TRUE, 10, 579);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('churrascaria tres irmaos 80', '88881893046164', '91816878518', 'contato80@churrascaria.com.br', TRUE, 9, 580);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto estrela 81', '56905096568805', '81280072720', 'contato81@postoestrela.com.br', TRUE, 12, 581);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('auto posto cidade nova 82', '81472373564028', '41083069789', 'contato82@autopostocid.com.br', TRUE, 14, 582);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto estrela 83', '95145498367147', '81490668867', 'contato83@postoestrela.com.br', TRUE, 13, 583);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto estrela 84', '85711645605933', '41431807392', 'contato84@postoestrela.com.br', TRUE, 13, 584);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto shell 85', '02585653377713', '41167871926', 'contato85@postoshell85.com.br', TRUE, 12, 585);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('combustiveis express 86', '48720124025405', '11054908099', 'contato86@combustiveis.com.br', TRUE, 13, 586);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto estrela 87', '39767388724607', '41034383000', 'contato87@postoestrela.com.br', TRUE, 11, 587);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto sol nascente 88', '43529493074109', '71546628973', 'contato88@postosolnasc.com.br', TRUE, 14, 588);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto br distribuidora 89', '89622527560035', '41023405677', 'contato89@postobrdistr.com.br', TRUE, 12, 589);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto shell 90', '12515890418204', '61166608123', 'contato90@postoshell90.com.br', TRUE, 15, 590);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto ipiranga 91', '78844790986386', '61276958444', 'contato91@postoipirang.com.br', TRUE, 14, 591);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('auto posto central 92', '22482488631327', '81145031180', 'contato92@autopostocen.com.br', TRUE, 14, 592);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto shell 93', '66914193960688', '51718911992', 'contato93@postoshell93.com.br', TRUE, 11, 593);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto gasolina rapida 94', '69247688341018', '21413181181', 'contato94@postogasolin.com.br', TRUE, 12, 594);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('auto posto cidade nova 95', '51325179044721', '61609406714', 'contato95@autopostocid.com.br', TRUE, 11, 595);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto nordeste 96', '87831031456494', '31275794074', 'contato96@postonordest.com.br', TRUE, 13, 596);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto sol nascente 97', '37449998709310', '21369412641', 'contato97@postosolnasc.com.br', TRUE, 12, 597);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto estrela 98', '60326753180502', '41101089654', 'contato98@postoestrela.com.br', TRUE, 14, 598);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('auto posto cidade nova 99', '12536064004773', '71794869894', 'contato99@autopostocid.com.br', TRUE, 13, 599);
-INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco) VALUES ('posto nordeste 100', '81703610077024', '81375949330', 'contato100@postonordest.com.br', TRUE, 11, 600);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Sede Corporativa','11111111111111','11940000001','corporativo1@jbs.com.br',TRUE,1,1,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Campinas','11111111111112','11940000002','corporativo2@jbs.com.br',TRUE,1,2,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Santos','11111111111113','11940000003','corporativo3@jbs.com.br',TRUE,1,3,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Osasco','11111111111114','11940000004','corporativo4@jbs.com.br',TRUE,1,4,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Manaus','11111111111115','11940000005','corporativo5@jbs.com.br',TRUE,1,5,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Rio Branco','11111111111116','11940000006','corporativo6@jbs.com.br',TRUE,1,6,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Paulista','11111111111117','11940000007','corporativo7@jbs.com.br',TRUE,1,7,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Interior','11111111111118','11940000008','corporativo8@jbs.com.br',TRUE,1,8,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Litoral','11111111111119','11940000009','corporativo9@jbs.com.br',TRUE,1,9,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('JBS Unidade Centro','11111111111120','11940000010','corporativo10@jbs.com.br',TRUE,1,10,1);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Paulista','22222222222221','11940000011','contato1@picpay.com',TRUE,5,1,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Faria Lima','22222222222222','11940000012','contato2@picpay.com',TRUE,5,2,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Campinas','22222222222223','11940000013','contato3@picpay.com',TRUE,5,3,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Santos','22222222222224','11940000014','contato4@picpay.com',TRUE,5,4,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Osasco','22222222222225','11940000015','contato5@picpay.com',TRUE,5,5,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Manaus','22222222222226','11940000016','contato6@picpay.com',TRUE,5,6,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Rio Branco','22222222222227','11940000017','contato7@picpay.com',TRUE,5,7,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Litoral','22222222222228','11940000018','contato8@picpay.com',TRUE,5,8,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Interior','22222222222229','11940000019','contato9@picpay.com',TRUE,5,9,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('PicPay Centro','22222222222230','11940000020','contato10@picpay.com',TRUE,5,10,2);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Corporate','33333333333331','11940000021','contato1@original.com',TRUE,10,1,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Paulista','33333333333332','11940000022','contato2@original.com',TRUE,10,2,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Campinas','33333333333333','11940000023','contato3@original.com',TRUE,10,3,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Santos','33333333333334','11940000024','contato4@original.com',TRUE,10,4,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Osasco','33333333333335','11940000025','contato5@original.com',TRUE,10,5,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Manaus','33333333333336','11940000026','contato6@original.com',TRUE,10,6,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Rio Branco','33333333333337','11940000027','contato7@original.com',TRUE,10,7,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Interior','33333333333338','11940000028','contato8@original.com',TRUE,10,8,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Litoral','33333333333339','11940000029','contato9@original.com',TRUE,10,9,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Banco Original Centro','33333333333340','11940000030','contato10@original.com',TRUE,10,10,3);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Luziânia','44444444444441','11940000031','contato1@flora.com',TRUE,6,1,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Campinas','44444444444442','11940000032','contato2@flora.com',TRUE,6,2,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Santos','44444444444443','11940000033','contato3@flora.com',TRUE,6,3,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Osasco','44444444444444','11940000034','contato4@flora.com',TRUE,6,4,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Manaus','44444444444445','11940000035','contato5@flora.com',TRUE,6,5,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Rio Branco','44444444444446','11940000036','contato6@flora.com',TRUE,6,6,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Paulista','44444444444447','11940000037','contato7@flora.com',TRUE,6,7,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Interior','44444444444448','11940000038','contato8@flora.com',TRUE,6,8,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Litoral','44444444444449','11940000039','contato9@flora.com',TRUE,6,9,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Flora Centro','44444444444450','11940000040','contato10@flora.com',TRUE,6,10,4);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Germinare Tech','12121212121212','11940000041','contato1@institutojef.org.br',TRUE,11,1,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Campinas','12121212121213','11940000042','contato2@institutojef.org.br',TRUE,11,2,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Santos','12121212121214','11940000043','contato3@institutojef.org.br',TRUE,11,3,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Osasco','12121212121215','11940000044','contato4@institutojef.org.br',TRUE,11,4,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Manaus','12121212121216','11940000045','contato5@institutojef.org.br',TRUE,11,5,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Rio Branco','12121212121217','11940000046','contato6@institutojef.org.br',TRUE,11,6,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Paulista','12121212121218','11940000047','contato7@institutojef.org.br',TRUE,11,7,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Interior','12121212121219','11940000048','contato8@institutojef.org.br',TRUE,11,8,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Litoral','12121212121220','11940000049','contato9@institutojef.org.br',TRUE,11,9,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Instituto J&F Centro','12121212121221','11940000050','contato10@institutojef.org.br',TRUE,11,10,11);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Sede Corporativa','55555555555551','11940000051','contato1@eldoradobrasil.com.br',TRUE,2,1,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Campinas','55555555555552','11940000052','contato2@eldoradobrasil.com.br',TRUE,2,2,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Santos','55555555555553','11940000053','contato3@eldoradobrasil.com.br',TRUE,2,3,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Osasco','55555555555554','11940000054','contato4@eldoradobrasil.com.br',TRUE,2,4,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Manaus','55555555555555','11940000055','contato5@eldoradobrasil.com.br',TRUE,2,5,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Rio Branco','55555555555556','11940000056','contato6@eldoradobrasil.com.br',TRUE,2,6,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Paulista','55555555555557','11940000057','contato7@eldoradobrasil.com.br',TRUE,2,7,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Interior','55555555555558','11940000058','contato8@eldoradobrasil.com.br',TRUE,2,8,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Litoral','55555555555559','11940000059','contato9@eldoradobrasil.com.br',TRUE,2,9,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Eldorado Brasil Centro','55555555555510','11940000060','contato10@eldoradobrasil.com.br',TRUE,2,10,5);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Sede Corporativa','66666666666661','11940000061','contato1@ambarenergia.com.br',TRUE,7,1,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Campinas','66666666666662','11940000062','contato2@ambarenergia.com.br',TRUE,7,2,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Santos','66666666666663','11940000063','contato3@ambarenergia.com.br',TRUE,7,3,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Osasco','66666666666664','11940000064','contato4@ambarenergia.com.br',TRUE,7,4,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Manaus','66666666666665','11940000065','contato5@ambarenergia.com.br',TRUE,7,5,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Rio Branco','66666666666666','11940000066','contato6@ambarenergia.com.br',TRUE,7,6,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Paulista','66666666666667','11940000067','contato7@ambarenergia.com.br',TRUE,7,7,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Interior','66666666666668','11940000068','contato8@ambarenergia.com.br',TRUE,7,8,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Litoral','66666666666669','11940000069','contato9@ambarenergia.com.br',TRUE,7,9,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Ambar Energia Centro','66666666666610','11940000070','contato10@ambarenergia.com.br',TRUE,7,10,6);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Sede Corporativa','77777777777771','11940000071','contato1@canalrural.com.br',TRUE,12,1,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Campinas','77777777777772','11940000072','contato2@canalrural.com.br',TRUE,12,2,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Santos','77777777777773','11940000073','contato3@canalrural.com.br',TRUE,12,3,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Osasco','77777777777774','11940000074','contato4@canalrural.com.br',TRUE,12,4,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Manaus','77777777777775','11940000075','contato5@canalrural.com.br',TRUE,12,5,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Rio Branco','77777777777776','11940000076','contato6@canalrural.com.br',TRUE,12,6,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Paulista','77777777777777','11940000077','contato7@canalrural.com.br',TRUE,12,7,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Interior','77777777777778','11940000078','contato8@canalrural.com.br',TRUE,12,8,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Litoral','77777777777779','11940000079','contato9@canalrural.com.br',TRUE,12,9,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Canal Rural Centro','77777777777710','11940000080','contato10@canalrural.com.br',TRUE,12,10,7);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Sede Corporativa','88888888888881','11940000081','contato1@lhgmining.com.br',TRUE,3,1,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Campinas','88888888888882','11940000082','contato2@lhgmining.com.br',TRUE,3,2,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Santos','88888888888883','11940000083','contato3@lhgmining.com.br',TRUE,3,3,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Osasco','88888888888884','11940000084','contato4@lhgmining.com.br',TRUE,3,4,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Manaus','88888888888885','11940000085','contato5@lhgmining.com.br',TRUE,3,5,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Rio Branco','88888888888886','11940000086','contato6@lhgmining.com.br',TRUE,3,6,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Paulista','88888888888887','11940000087','contato7@lhgmining.com.br',TRUE,3,7,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Interior','88888888888888','11940000088','contato8@lhgmining.com.br',TRUE,3,8,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Litoral','88888888888889','11940000089','contato9@lhgmining.com.br',TRUE,3,9,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('LHG Mining Centro','88888888888810','11940000090','contato10@lhgmining.com.br',TRUE,3,10,8);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Sede Corporativa','99999999999991','11940000091','contato1@fluxus.com.br',TRUE,8,1,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Campinas','99999999999992','11940000092','contato2@fluxus.com.br',TRUE,8,2,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Santos','99999999999993','11940000093','contato3@fluxus.com.br',TRUE,8,3,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Osasco','99999999999994','11940000094','contato4@fluxus.com.br',TRUE,8,4,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Manaus','99999999999995','11940000095','contato5@fluxus.com.br',TRUE,8,5,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Rio Branco','99999999999996','11940000096','contato6@fluxus.com.br',TRUE,8,6,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Paulista','99999999999997','11940000097','contato7@fluxus.com.br',TRUE,8,7,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Interior','99999999999998','11940000098','contato8@fluxus.com.br',TRUE,8,8,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Litoral','99999999999999','11940000099','contato9@fluxus.com.br',TRUE,8,9,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('Fluxus Centro','99999999999910','11940000100','contato10@fluxus.com.br',TRUE,8,10,9);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Sede Corporativa','00000000000001','11940000101','contato1@mgas.com.br',TRUE,13,1,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Campinas','00000000000002','11940000102','contato2@mgas.com.br',TRUE,13,2,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Santos','00000000000003','11940000103','contato3@mgas.com.br',TRUE,13,3,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Osasco','00000000000004','11940000104','contato4@mgas.com.br',TRUE,13,4,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Manaus','00000000000005','11940000105','contato5@mgas.com.br',TRUE,13,5,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Rio Branco','00000000000006','11940000106','contato6@mgas.com.br',TRUE,13,6,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Paulista','00000000000007','11940000107','contato7@mgas.com.br',TRUE,13,7,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Interior','00000000000008','11940000108','contato8@mgas.com.br',TRUE,13,8,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Litoral','00000000000009','11940000109','contato9@mgas.com.br',TRUE,13,9,10);
+INSERT INTO estabelecimento (nome, cnpj, telefone, email, status, id_mcc, id_endereco, id_empresa) VALUES ('MGAS Centro','00000000000010','11940000110','contato10@mgas.com.br',TRUE,13,10,10);
 
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (279.82, 85, 14, '2024-02-27 09:18:16', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (228.87, 543, 74, '2024-02-10 10:40:13', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (11.97, 470, 36, '2024-03-13 02:23:37', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (283.72, 67, 38, '2024-10-04 00:51:15', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (137.08, 327, 76, '2024-06-25 15:58:05', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (158.1, 510, 86, '2025-03-14 13:44:19', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (115.34, 264, 90, '2024-05-05 15:23:55', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (228.87, 543, 24, '2024-02-10 10:40:13', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (11.97, 470, 11, '2024-03-13 02:23:37', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (105.1, 67, 8, '2024-10-04 00:51:15', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (137.08, 327, 26, '2024-06-25 15:58:05', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (117.09, 510, 41, '2025-03-14 13:44:19', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (115.34, 264, 45, '2024-05-05 15:23:55', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (233.97, 367, 14, '2024-01-21 14:15:04', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (111.26, 180, 94, '2024-01-01 23:31:51', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (96.78, 47, 97, '2025-03-30 21:36:59', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (124.24, 483, 50, '2024-09-27 06:53:06', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (37.94, 550, 50, '2025-04-21 11:02:38', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (35.61, 183, 59, '2024-12-18 23:11:18', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (230.19, 232, 73, '2024-04-30 05:07:42', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (218.22, 550, 64, '2024-06-01 07:07:25', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (254.51, 268, 72, '2024-10-19 03:18:23', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (251.5, 191, 85, '2024-04-29 04:12:50', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (168.26, 300, 85, '2024-03-12 20:06:56', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (111.26, 180, 44, '2024-01-01 23:31:51', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (96.78, 47, 47, '2025-03-30 21:36:59', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (124.24, 483, 24, '2024-09-27 06:53:06', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (37.94, 550, 31, '2025-04-21 11:02:38', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (35.61, 183, 24, '2024-12-18 23:11:18', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (230.19, 232, 23, '2024-04-30 05:07:42', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (218.22, 550, 31, '2024-06-01 07:07:25', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (254.51, 268, 22, '2024-10-19 03:18:23', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (181.57, 191, 42, '2024-04-29 04:12:50', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (150.17, 300, 41, '2024-03-12 20:06:56', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.68, 182, 11, '2024-06-04 22:24:14', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (275.64, 372, 98, '2024-10-30 07:45:47', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (275.64, 372, 48, '2024-10-30 07:45:47', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (6.73, 331, 5, '2024-10-09 14:25:22', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (262.45, 367, 13, '2024-09-05 02:36:24', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (264.85, 91, 17, '2024-04-04 07:42:55', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (120.99, 21, 44, '2025-04-01 06:49:23', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (226.28, 283, 25, '2024-11-01 08:45:08', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (162.86, 452, 27, '2025-04-07 21:41:17', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (79.38, 21, 22, '2025-04-01 06:49:23', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (226.28, 283, 4, '2024-11-01 08:45:08', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (162.86, 452, 13, '2025-04-07 21:41:17', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (200.47, 224, 14, '2024-09-11 11:58:50', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (181.79, 176, 1, '2024-07-03 08:16:58', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (210.21, 362, 17, '2024-03-17 22:32:34', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (286.36, 304, 51, '2025-03-28 23:28:19', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (42.21, 249, 47, '2024-02-12 12:48:31', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (119.88, 135, 80, '2024-02-11 15:06:04', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (236.21, 65, 86, '2024-03-27 06:47:30', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (29.53, 47, 96, '2024-09-10 18:11:03', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (254.6, 57, 54, '2024-12-23 00:55:40', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (290.54, 193, 34, '2025-04-29 06:37:57', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (53.48, 304, 25, '2025-03-28 23:28:19', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (42.21, 249, 30, '2024-02-12 12:48:31', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (119.88, 135, 30, '2024-02-11 15:06:04', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (236.21, 65, 46, '2024-03-27 06:47:30', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (29.53, 47, 46, '2024-09-10 18:11:03', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (146.68, 57, 38, '2024-12-23 00:55:40', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (199.2, 193, 14, '2025-04-29 06:37:57', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (284.53, 104, 11, '2024-06-28 09:55:47', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (169.03, 570, 87, '2024-04-18 16:30:54', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (256.84, 404, 25, '2024-10-18 15:13:50', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (230.43, 40, 80, '2025-03-11 11:52:30', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (63.01, 99, 62, '2024-06-18 08:46:14', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (82.41, 511, 34, '2024-04-06 23:43:32', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (77.28, 483, 60, '2024-11-16 13:08:07', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (218.77, 244, 47, '2024-02-24 12:45:31', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (169.03, 570, 41, '2024-04-18 16:30:54', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (256.84, 404, 5, '2024-10-18 15:13:50', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (230.43, 40, 30, '2025-03-11 11:52:30', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (63.01, 99, 40, '2024-06-18 08:46:14', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (82.41, 511, 12, '2024-04-06 23:43:32', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (77.28, 483, 24, '2024-11-16 13:08:07', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (218.77, 244, 25, '2024-02-24 12:45:31', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (232.77, 55, 17, '2025-02-15 21:37:32', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (126.14, 14, 18, '2024-03-04 09:20:36', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (40.86, 220, 51, '2024-10-25 13:51:22', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (292.55, 485, 81, '2024-06-22 11:26:23', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (40.86, 220, 21, '2024-10-25 13:51:22', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (292.55, 485, 46, '2024-06-22 11:26:23', 'negada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (126.97, 145, 20, '2024-03-31 09:15:55', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (75.43, 466, 56, '2025-01-28 14:22:23', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (179.36, 473, 81, '2024-11-17 10:17:47', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (9.41, 213, 56, '2024-07-08 09:06:03', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (24.98, 513, 74, '2025-03-19 22:44:49', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (293.37, 138, 85, '2024-04-18 16:08:54', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (266.23, 117, 69, '2024-11-08 11:45:52', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (75.43, 466, 27, '2025-01-28 14:22:23', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (179.36, 473, 44, '2024-11-17 10:17:47', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (9.41, 213, 34, '2024-07-08 09:06:03', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (24.98, 513, 24, '2025-03-19 22:44:49', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (293.37, 138, 49, '2024-04-18 16:08:54', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (266.23, 117, 38, '2024-11-08 11:45:52', 'negada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (117.26, 133, 14, '2025-04-12 23:28:09', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (183.48, 201, 75, '2025-03-16 22:08:40', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (97.34, 140, 22, '2025-04-22 14:34:50', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (93.88, 199, 33, '2025-02-08 01:54:17', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (190.79, 572, 32, '2025-02-25 02:00:32', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (183.48, 201, 25, '2025-03-16 22:08:40', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (97.34, 140, 1, '2025-04-22 14:34:50', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (93.88, 199, 20, '2025-02-08 01:54:17', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (190.79, 572, 13, '2025-02-25 02:00:32', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (26.94, 86, 15, '2024-06-21 20:52:20', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (12.17, 196, 55, '2025-02-07 16:36:16', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (146.28, 382, 72, '2024-09-16 09:09:41', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (204.07, 459, 45, '2024-02-13 07:55:54', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (267.19, 537, 50, '2025-01-08 23:28:11', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (55.66, 40, 79, '2024-10-03 18:29:12', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (9.66, 119, 89, '2024-07-25 22:55:31', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (54.65, 356, 31, '2024-11-16 08:44:34', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (121.6, 306, 93, '2024-01-18 11:11:39', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (155.07, 247, 25, '2024-02-26 06:45:25', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (12.17, 196, 37, '2025-02-07 16:36:16', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (135.74, 382, 22, '2024-09-16 09:09:41', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (204.07, 459, 40, '2024-02-13 07:55:54', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (267.19, 537, 38, '2025-01-08 23:28:11', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (55.66, 40, 29, '2024-10-03 18:29:12', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (9.66, 119, 50, '2024-07-25 22:55:31', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (54.65, 356, 17, '2024-11-16 08:44:34', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (3.3, 306, 43, '2024-01-18 11:11:39', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (155.07, 247, 8, '2024-02-26 06:45:25', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (188.63, 133, 1, '2024-09-24 17:41:01', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (285.66, 436, 76, '2024-12-29 19:44:28', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (291.2, 353, 93, '2025-03-19 16:52:30', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (256.55, 376, 46, '2024-09-02 07:49:02', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (285.66, 436, 26, '2024-12-29 19:44:28', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (177.63, 353, 43, '2025-03-19 16:52:30', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (256.55, 376, 37, '2024-09-02 07:49:02', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (288.69, 433, 9, '2024-04-23 10:32:47', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.25, 207, 58, '2024-02-27 01:57:40', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (296.35, 168, 87, '2024-12-20 05:22:51', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (130.58, 408, 91, '2024-10-02 20:24:28', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (259.54, 359, 84, '2024-03-21 20:03:37', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (91.04, 429, 47, '2024-05-04 13:28:15', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.25, 207, 28, '2024-02-27 01:57:40', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (255.09, 168, 49, '2024-12-20 05:22:51', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (130.58, 408, 41, '2024-10-02 20:24:28', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (259.54, 359, 50, '2024-03-21 20:03:37', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (43.64, 429, 30, '2024-05-04 13:28:15', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (165.2, 8, 4, '2024-10-07 18:43:54', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (224.22, 25, 32, '2025-01-29 16:51:14', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (190.34, 129, 74, '2025-03-09 21:25:18', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (288.66, 172, 60, '2024-05-13 00:57:24', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (224.22, 25, 6, '2025-01-29 16:51:14', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (31.51, 129, 24, '2025-03-09 21:25:18', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (288.66, 172, 33, '2024-05-13 00:57:24', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.47, 361, 6, '2025-02-09 05:14:17', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (192.82, 128, 11, '2024-06-27 06:42:25', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (276.3, 586, 46, '2025-02-27 03:13:19', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (144.22, 1, 24, '2024-01-06 02:43:31', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (167.37, 16, 58, '2024-04-16 23:24:45', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (25.46, 517, 33, '2024-05-04 09:42:22', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (229.8, 335, 90, '2024-06-11 14:23:30', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (51.32, 51, 42, '2024-09-11 04:09:19', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (4.94, 586, 27, '2025-02-27 03:13:19', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (144.22, 1, 2, '2024-01-06 02:43:31', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (75.61, 16, 37, '2024-04-16 23:24:45', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (25.46, 517, 18, '2024-05-04 09:42:22', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (229.8, 335, 46, '2024-06-11 14:23:30', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (51.32, 51, 32, '2024-09-11 04:09:19', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (214.27, 524, 12, '2024-01-15 05:30:59', 'estornada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (156.41, 25, 11, '2025-04-25 08:37:16', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (80.5, 591, 69, '2024-04-10 02:49:55', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (208.57, 158, 23, '2024-01-10 23:49:09', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (80.5, 591, 32, '2024-04-10 02:49:55', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (18.0, 158, 19, '2024-01-10 23:49:09', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (44.72, 344, 2, '2024-07-05 21:36:52', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (197.99, 571, 20, '2024-06-28 08:32:42', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.16, 512, 25, '2024-04-20 13:30:43', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (63.26, 215, 82, '2024-12-20 21:10:14', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (38.84, 440, 27, '2024-12-03 16:07:21', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.16, 512, 13, '2024-04-20 13:30:43', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (63.26, 215, 46, '2024-12-20 21:10:14', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (38.84, 440, 1, '2024-12-03 16:07:21', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (13.89, 428, 19, '2025-04-15 19:21:19', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (121.94, 544, 54, '2024-04-06 06:55:43', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (118.72, 471, 55, '2025-03-09 12:42:12', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (7.73, 239, 87, '2024-06-09 06:28:50', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (87.14, 284, 33, '2024-07-15 07:03:36', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (121.94, 544, 25, '2024-04-06 06:55:43', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (118.72, 471, 32, '2025-03-09 12:42:12', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (7.73, 239, 50, '2024-06-09 06:28:50', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (87.14, 284, 5, '2024-07-15 07:03:36', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (34.38, 296, 3, '2024-10-30 16:05:30', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (14.04, 4, 60, '2025-02-28 13:16:44', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (167.93, 257, 95, '2024-03-18 13:22:59', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (149.49, 77, 84, '2024-08-20 11:47:53', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (55.14, 532, 53, '2024-01-03 18:58:37', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (40.11, 73, 38, '2024-01-05 17:10:30', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (14.04, 4, 25, '2025-02-28 13:16:44', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (39.27, 257, 45, '2024-03-18 13:22:59', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (149.49, 77, 48, '2024-08-20 11:47:53', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (55.14, 532, 33, '2024-01-03 18:58:37', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (40.11, 73, 14, '2024-01-05 17:10:30', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (184.9, 500, 3, '2024-11-12 20:39:14', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (34.12, 323, 91, '2024-05-31 13:42:37', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (102.77, 542, 21, '2024-05-04 02:50:10', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (44.28, 126, 90, '2025-03-05 06:35:56', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (252.05, 387, 42, '2024-05-29 23:46:00', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (192.61, 342, 83, '2024-07-01 12:56:04', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (21.89, 566, 35, '2024-08-25 17:25:07', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (281.83, 135, 52, '2024-06-03 03:53:05', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (34.12, 323, 41, '2024-05-31 13:42:37', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (102.77, 542, 3, '2024-05-04 02:50:10', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (44.28, 126, 47, '2025-03-05 06:35:56', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (252.05, 387, 28, '2024-05-29 23:46:00', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (192.61, 342, 43, '2024-07-01 12:56:04', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (21.89, 566, 7, '2024-08-25 17:25:07', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (281.83, 135, 36, '2024-06-03 03:53:05', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (36.42, 590, 6, '2024-03-30 22:52:56', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (246.04, 125, 100, '2024-09-05 00:57:11', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (141.59, 141, 56, '2025-02-25 23:48:22', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (16.91, 307, 23, '2024-03-05 01:05:30', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (178.33, 409, 36, '2024-07-03 19:53:34', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (267.81, 411, 46, '2025-01-29 04:27:48', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (143.91, 456, 98, '2025-02-26 04:51:10', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (57.54, 98, 40, '2024-06-20 00:33:05', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (288.09, 257, 90, '2024-08-17 03:30:30', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (264.39, 459, 47, '2024-02-05 02:30:23', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (125.0, 435, 46, '2024-09-06 11:08:20', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (294.85, 466, 77, '2024-03-09 13:20:50', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (296.88, 343, 25, '2025-03-01 20:09:27', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (228.79, 239, 91, '2024-12-29 07:13:44', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (246.04, 125, 50, '2024-09-05 00:57:11', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (75.33, 141, 22, '2025-02-25 23:48:22', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (16.91, 307, 8, '2024-03-05 01:05:30', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (178.33, 409, 10, '2024-07-03 19:53:34', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (267.81, 411, 32, '2025-01-29 04:27:48', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (143.91, 456, 48, '2025-02-26 04:51:10', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (57.54, 98, 19, '2024-06-20 00:33:05', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (39.27, 257, 48, '2024-08-17 03:30:30', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (264.39, 459, 40, '2024-02-05 02:30:23', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (125.0, 435, 36, '2024-09-06 11:08:20', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (294.85, 466, 27, '2024-03-09 13:20:50', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (10.43, 343, 4, '2025-03-01 20:09:27', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (228.79, 239, 41, '2024-12-29 07:13:44', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (262.84, 338, 19, '2024-09-09 13:01:14', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (30.89, 83, 88, '2024-10-29 04:30:13', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (290.55, 274, 73, '2025-03-19 01:46:29', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (30.89, 83, 44, '2024-10-29 04:30:13', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (290.55, 274, 23, '2025-03-19 01:46:29', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (37.16, 578, 5, '2024-09-27 18:56:39', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (39.3, 139, 22, '2024-06-08 07:27:12', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (180.56, 402, 91, '2024-10-19 00:25:16', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.33, 153, 66, '2024-12-02 00:40:35', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (39.3, 139, 20, '2024-06-08 07:27:12', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (160.34, 402, 41, '2024-10-19 00:25:16', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.33, 153, 34, '2024-12-02 00:40:35', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (203.13, 98, 10, '2025-03-24 18:21:33', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (217.85, 477, 76, '2024-01-06 11:05:40', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (120.17, 214, 64, '2024-03-23 04:45:54', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (220.5, 192, 96, '2025-03-20 11:25:09', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (175.31, 371, 82, '2025-04-06 16:18:29', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (272.38, 487, 14, '2024-09-12 01:04:13', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (173.31, 477, 26, '2024-01-06 11:05:40', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (16.13, 214, 35, '2024-03-23 04:45:54', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (220.5, 192, 46, '2025-03-20 11:25:09', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (24.86, 371, 42, '2025-04-06 16:18:29', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (176.75, 487, 14, '2024-09-12 01:04:13', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (67.32, 169, 7, '2025-01-12 07:02:10', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (109.07, 520, 67, '2024-04-23 00:56:48', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (289.15, 497, 94, '2025-03-11 14:28:12', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (156.2, 304, 66, '2024-03-22 11:43:38', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (233.9, 203, 99, '2025-03-22 21:52:04', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (20.09, 191, 90, '2025-03-17 13:06:09', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (109.07, 520, 21, '2024-04-23 00:56:48', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (289.15, 497, 44, '2025-03-11 14:28:12', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (53.48, 304, 25, '2024-03-22 11:43:38', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (233.9, 203, 49, '2025-03-22 21:52:04', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (20.09, 191, 42, '2025-03-17 13:06:09', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (74.98, 361, 1, '2025-04-01 05:39:34', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (255.65, 471, 75, '2024-08-18 20:00:09', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.78, 357, 41, '2024-07-15 05:45:28', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (37.54, 211, 40, '2024-02-03 13:35:01', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (224.43, 130, 75, '2024-04-15 04:44:31', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (89.02, 264, 99, '2024-06-29 09:37:56', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (298.09, 273, 58, '2024-03-25 18:14:26', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (255.65, 471, 25, '2024-08-18 20:00:09', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.78, 357, 38, '2024-07-15 05:45:28', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (37.54, 211, 12, '2024-02-03 13:35:01', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (224.43, 130, 25, '2024-04-15 04:44:31', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (89.02, 264, 49, '2024-06-29 09:37:56', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (43.82, 273, 34, '2024-03-25 18:14:26', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (81.44, 560, 4, '2024-09-21 18:30:41', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (276.67, 160, 66, '2025-02-04 13:48:18', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (214.64, 492, 81, '2025-03-16 22:32:30', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (212.69, 466, 60, '2025-03-20 12:28:35', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (257.25, 388, 47, '2024-12-15 20:48:00', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (151.58, 517, 29, '2024-11-19 14:43:38', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (116.63, 57, 71, '2025-02-12 17:58:00', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (204.77, 235, 28, '2025-01-14 15:59:55', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (21.75, 162, 89, '2024-12-09 23:26:55', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (276.67, 160, 21, '2025-02-04 13:48:18', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (168.91, 492, 43, '2025-03-16 22:32:30', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (212.69, 466, 27, '2025-03-20 12:28:35', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (100.17, 388, 29, '2024-12-15 20:48:00', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (151.58, 517, 18, '2024-11-19 14:43:38', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (116.63, 57, 21, '2025-02-12 17:58:00', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (204.77, 235, 16, '2025-01-14 15:59:55', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (21.75, 162, 43, '2024-12-09 23:26:55', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (252.86, 524, 13, '2024-12-27 17:07:22', 'estornada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (192.86, 524, 13, '2024-05-30 03:28:11', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (189.79, 493, 4, '2025-01-17 02:13:52', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (177.24, 296, 28, '2024-04-25 10:19:57', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (152.81, 551, 92, '2024-08-07 10:34:36', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (176.58, 313, 25, '2025-04-14 03:39:05', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.22, 256, 71, '2024-02-03 13:38:33', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (230.67, 67, 29, '2024-04-17 09:03:59', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (97.94, 305, 88, '2024-05-03 04:55:43', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (202.94, 532, 41, '2024-09-14 02:33:30', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (137.89, 476, 37, '2024-07-22 21:00:48', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (58.62, 493, 4, '2025-01-17 02:13:52', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (177.24, 296, 17, '2024-04-25 10:19:57', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (152.81, 551, 42, '2024-08-07 10:34:36', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (176.58, 313, 14, '2025-04-14 03:39:05', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (206.22, 256, 21, '2024-02-03 13:38:33', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (105.1, 67, 8, '2024-04-17 09:03:59', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (97.94, 305, 46, '2024-05-03 04:55:43', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (202.94, 532, 33, '2024-09-14 02:33:30', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (137.89, 476, 17, '2024-07-22 21:00:48', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (46.2, 145, 7, '2024-04-09 09:19:37', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (27.08, 375, 62, '2024-11-25 05:42:46', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (177.62, 27, 43, '2024-10-04 05:44:55', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (138.19, 532, 45, '2024-02-02 13:06:11', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (27.08, 375, 36, '2024-11-25 05:42:46', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (177.62, 27, 28, '2024-10-04 05:44:55', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (138.19, 532, 33, '2024-02-02 13:06:11', 'negada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (17.08, 26, 20, '2024-03-29 04:39:12', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (128.34, 146, 10, '2024-08-28 03:18:41', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.86, 435, 47, '2024-12-31 03:26:04', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (85.86, 435, 36, '2024-12-31 03:26:04', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (52.23, 589, 15, '2025-03-03 23:36:50', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (32.51, 461, 85, '2024-04-24 13:07:55', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (236.78, 582, 94, '2024-11-21 00:57:26', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (124.54, 567, 57, '2024-04-29 11:26:18', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (19.67, 461, 42, '2024-04-24 13:07:55', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (236.78, 582, 44, '2024-11-21 00:57:26', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (124.54, 567, 28, '2024-04-29 11:26:18', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (196.49, 415, 20, '2024-01-21 12:24:21', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (128.68, 217, 38, '2024-09-30 22:49:33', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (128.68, 217, 18, '2024-09-30 22:49:33', 'aprovada');
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (114.44, 194, 1, '2024-09-08 12:51:10', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (103.23, 447, 44, '2024-04-07 22:06:03', 'estornada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (103.18, 541, 28, '2024-01-06 03:20:56', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (163.99, 591, 63, '2024-08-30 00:53:43', 'negada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (195.62, 176, 28, '2025-01-14 03:56:10', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (218.34, 440, 25, '2024-02-17 22:28:39', 'aprovada');
-INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (13.62, 28, 53, '2024-05-18 05:06:07', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (103.23, 447, 28, '2024-04-07 22:06:03', 'estornada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (103.18, 541, 2, '2024-01-06 03:20:56', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (163.99, 591, 32, '2024-08-30 00:53:43', 'negada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (195.62, 176, 17, '2025-01-14 03:56:10', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (218.34, 440, 1, '2024-02-17 22:28:39', 'aprovada');
+INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (13.62, 28, 29, '2024-05-18 05:06:07', 'aprovada');
 
 COMMIT;
 
@@ -4144,58 +4168,45 @@ CREATE VIEW vw_colaborador_completo AS (
     ON c.id_endereco = e.id
 );
 
-CREATE VIEW vw_dashboard_gestor AS (
+CREATE VIEW vw_empresas_categoria AS (
     SELECT
-        cb.nome AS categoria_beneficio,
+        e.id                                                    AS id_empresa,
+        e.nome                                                  AS empresa,
+        cb.nome                                                 AS categoria,
+        ROUND(SUM(t.valor), 2)                                  AS valor_total_transacoes,
+        COUNT(DISTINCT t.id)                                    AS quantidade_transacoes,
+        ROUND(SUM(t.valor) / COUNT(DISTINCT t.id), 2)           AS media_valor_transacoes
+    FROM empresa e
+    JOIN estabelecimento es
+        ON es.id_empresa = e.id
+    JOIN transacao t
+        ON t.id_estabelecimento = es.id
+    JOIN cartao_categoria_beneficio ccb
+        ON ccb.id = t.id_cartao_categoria
+    JOIN categoria_beneficio cb
+        ON cb.id = ccb.id_categoria_beneficio
+    GROUP BY e.id, e.nome, cb.id, cb.nome
+    ORDER BY e.nome ASC, cb.nome ASC
+);
 
-        cb.valor_recarga,
-
-        COUNT(DISTINCT ccb.id_cartao) AS total_cartoes_ativos,
-        COUNT(DISTINCT c.id_colaborador) AS total_colaboradores_utilizando,
-
-        COALESCE(SUM(ccb.saldo), 0) AS saldo_total_disponivel,
-
-        COUNT(t.id) AS quantidade_transacoes,
-        COALESCE(SUM(t.valor), 0) AS valor_total_transacionado,
-        COALESCE(AVG(t.valor), 0) AS ticket_medio,
-
-        COUNT(DISTINCT e.id) AS estabelecimentos_utilizados,
-
-        MAX(t.data_tempo_transacao) AS ultima_transacao,
-
-        CASE
-            WHEN COALESCE(SUM(ccb.saldo), 0) + COALESCE(SUM(t.valor), 0) > 0
-            THEN ROUND(
-                (
-                    COALESCE(SUM(t.valor), 0) /
-                    (
-                        COALESCE(SUM(ccb.saldo), 0) +
-                        COALESCE(SUM(t.valor), 0)
-                    )
-                ) * 100,
-                2
-            )
-            ELSE 0
-        END AS percentual_utilizado
-
-    FROM categoria_beneficio cb
-
-    LEFT JOIN cartao_categoria_beneficio ccb
-    ON ccb.id_categoria_beneficio = cb.id
-    AND ccb.ativo = TRUE
-
-    LEFT JOIN cartao c
-    ON c.id = ccb.id_cartao
-
-    LEFT JOIN transacao t
-    ON t.id_cartao = c.id
-
-    LEFT JOIN estabelecimento e
-    ON e.id = t.id_estabelecimento
-
-    GROUP BY
-        cb.nome,
-        cb.valor_recarga
+CREATE VIEW vw_empresas AS (
+    SELECT
+        e.id                                                    AS id_empresa,
+        e.nome                                                  AS empresa,
+        ROUND(SUM(t.valor), 2)                                  AS valor_total_transacoes,
+        COUNT(DISTINCT t.id)                                    AS quantidade_transacoes,
+        ROUND(SUM(t.valor) / COUNT(DISTINCT t.id), 2)           AS media_valor_transacoes
+    FROM empresa e
+    JOIN estabelecimento es
+        ON es.id_empresa = e.id
+    JOIN transacao t
+        ON t.id_estabelecimento = es.id
+    JOIN cartao_categoria_beneficio ccb
+        ON ccb.id = t.id_cartao_categoria
+    JOIN categoria_beneficio cb
+        ON cb.id = ccb.id_categoria_beneficio
+    GROUP BY e.id, e.nome
+    ORDER BY e.nome ASC
 );
 
 CREATE VIEW vw_estabelecimento_mcc AS (
@@ -4238,7 +4249,7 @@ CREATE VIEW vw_gasto_categoria AS (
     JOIN categoria_beneficio cb
     ON cbm.id_categoria = cb.id
 
-    GROUP BY cb.nome;
+    GROUP BY cb.nome
 );
 
 CREATE VIEW vw_ranking_estabelecimentos AS (
@@ -4283,8 +4294,11 @@ CREATE VIEW vw_total_gasto_colaborador AS (
     JOIN cartao ca
     ON ca.id_colaborador = co.id
 
+    JOIN cartao_categoria_beneficio ccb
+    ON ccb.id_cartao = ca.id
+
     JOIN transacao t
-    ON t.id_cartao = ca.id
+    ON t.id_cartao_categoria = ca.id
 
     GROUP BY co.id, co.nome
 );
@@ -4306,8 +4320,11 @@ CREATE VIEW vw_transacoes_completas AS (
 
     FROM transacao t
 
+    JOIN cartao_categoria_beneficio ccb
+    ON t.id_cartao_categoria = ccb.id
+
     JOIN cartao ca
-    ON t.id_cartao = ca.id
+    ON ccb.id_cartao = ca.id
 
     JOIN colaborador co
     ON ca.id_colaborador = co.id
@@ -4318,6 +4335,7 @@ CREATE VIEW vw_transacoes_completas AS (
     JOIN mcc m
     ON es.id_mcc = m.id
 );
+
 
 CREATE VIEW vw_transacoes_mes AS (
       SELECT *

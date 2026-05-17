@@ -43,7 +43,7 @@ BEGIN
         ARRAY_AGG(id)
     INTO lista_ids_estabelecimento
     FROM estabelecimento
-    WHERE id_estabelecimento = OLD.id;
+    WHERE id_empresa = OLD.id;
 
 
     IF lista_ids_estabelecimento IS NOT NULL THEN
@@ -73,8 +73,7 @@ BEGIN
     END IF;
 
 
-    IF id_estabelecimento IS NULL
-    AND lista_ids_estabelecimento IS NULL THEN
+    IF lista_ids_estabelecimento IS NULL THEN
 
         INSERT INTO log_empresa (
             id_empresa,
