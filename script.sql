@@ -18,6 +18,11 @@ DROP TABLE IF EXISTS log_cartao_categoria_beneficio CASCADE;
 DROP TABLE IF EXISTS log_categoria_beneficio_mcc    CASCADE;
 DROP TABLE IF EXISTS log_transacao                  CASCADE;
 
+CREATE TABLE empresa (
+    id     SERIAL       PRIMARY KEY
+    ,nome   VARCHAR(60) NOT NULL
+)
+
 CREATE TABLE endereco (
     id              SERIAL       PRIMARY KEY,
     cep             VARCHAR(9)   NOT NULL,
@@ -90,15 +95,16 @@ CREATE TABLE categoria_beneficio_mcc (
 );
 
 CREATE TABLE estabelecimento (
-    id              SERIAL                    PRIMARY KEY,
-    nome            VARCHAR(120)              NOT NULL,
-    cnpj            VARCHAR(14)               UNIQUE NOT NULL,
-    telefone        VARCHAR(11)               NOT NULL,
-    email           VARCHAR(255)              NOT NULL,
-    status          BOOLEAN                   DEFAULT TRUE,
-    data_cadastro   TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
-    id_mcc          INTEGER                   NOT NULL REFERENCES mcc(id),
-    id_endereco     INTEGER                   NOT NULL REFERENCES endereco(id)
+    id             SERIAL                   PRIMARY KEY,
+    nome           VARCHAR(120)             NOT NULL,
+    cnpj           VARCHAR(14)              UNIQUE NOT NULL,
+    telefone       VARCHAR(11)              NOT NULL,
+    email          VARCHAR(255)             NOT NULL,
+    status         BOOLEAN                  DEFAULT TRUE,
+    data_cadastro  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    id_mcc         INTEGER                  NOT NULL REFERENCES mcc(id),
+    id_endereco    INTEGER                  NOT NULL REFERENCES endereco(id),
+    id_empresa     INTEGER                  NOT NULL REFERENCES empresa(id)
 );
 
 CREATE TABLE transacao (
@@ -172,6 +178,29 @@ CREATE TABLE log_estabelecimento (
     descricao             TEXT                      NOT NULL,
     CONSTRAINT constraint_status
         CHECK (LOWER(status::TEXT) IN ('true', 'false')),
+    CONSTRAINT constraint_tipo_mudanca
+        CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE log_empresa (
+    id                    SERIAL                    PRIMARY KEY,
+    id_empresa            INTEGER                   NOT NULL,
+    tipo_mudanca          VARCHAR(255)              NOT NULL,
+    data_hora_mudanca     TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
+    usuario_responsavel   VARCHAR(20)               NOT NULL,
+    descricao             TEXT                      NOT NULL,
+    CONSTRAINT constraint_tipo_mudanca
+        CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
+);
+
+CREATE TABLE log_empresa_estabelecimento (
+    id                    SERIAL                    PRIMARY KEY,
+    tipo_mudanca          VARCHAR(10)               NOT NULL,
+    id_estabelecimento    INTEGER                   NOT NULL,
+    id_empresa            INTEGER                   NOT NULL,
+    data_hora_mudanca     TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
+    usuario_responsavel   VARCHAR(20)               NOT NULL,
+    descricao             TEXT                      NOT NULL,
     CONSTRAINT constraint_tipo_mudanca
         CHECK (LOWER(tipo_mudanca) IN ('insert', 'update', 'delete', 'truncate'))
 );
@@ -1221,6 +1250,158 @@ BEGIN
     END IF;
 END; $$;
 
+CREATE OR REPLACE FUNCTION fn_log_empresa_update()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+
+DECLARE
+    campo                     VARCHAR(50);
+    valor_antigo              VARCHAR(50);
+    valor_novo                VARCHAR(50);
+    descricao_log             TEXT;
+    lista_ids_estabelecimento INTEGER[];
+    i                         INTEGER;
+
+BEGIN
+
+    descricao_log :=
+        'Registro ' || OLD.id ||
+        ' atualizado às ' || NOW() ||
+        '. Os seguintes campos foram atualizados:';
+
+
+    FOR campo, valor_antigo IN
+        SELECT *
+        FROM json_each_text(row_to_json(OLD))
+    LOOP
+
+        valor_novo := row_to_json(NEW) ->> campo;
+
+        IF valor_antigo IS DISTINCT FROM valor_novo THEN
+
+            descricao_log :=
+                descricao_log ||
+                E'\n- Campo: ' || campo ||
+                ' -> Mudou de ' || valor_antigo ||
+                ' para ' || valor_novo;
+
+        END IF;
+
+    END LOOP;
+
+
+    SELECT
+        ARRAY_AGG(id)
+    INTO lista_ids_estabelecimento
+    FROM estabelecimento
+    WHERE id_estabelecimento = OLD.id;
+
+
+    IF lista_ids_estabelecimento IS NOT NULL THEN
+
+        FOR i IN 1..array_length(lista_ids_estabelecimento, 1)
+        LOOP
+
+            INSERT INTO log_empresa_estabelecimento (
+                id_empresa,
+                id_estabelecimento,
+                tipo_mudanca,
+                data_hora_mudanca,
+                usuario_responsavel,
+                descricao
+            )
+            VALUES (
+                OLD.id,
+                lista_ids_estabelecimento[i],
+                TG_OP,
+                NOW(),
+                CURRENT_USER,
+                descricao_log
+            );
+
+        END LOOP;
+
+    END IF;
+
+
+    IF id_estabelecimento IS NULL
+    AND lista_ids_estabelecimento IS NULL THEN
+
+        INSERT INTO log_empresa (
+            id_empresa,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            descricao_log
+        );
+
+    END IF;
+
+
+    RETURN NEW;
+
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_log_empresa_insert_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+
+    IF (TG_OP = 'INSERT') THEN
+
+        INSERT INTO log_empresa (
+            id_empresa,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            NEW.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || NEW.id ||
+            ' inserido na tabela empresa às ' || NOW()
+        );
+
+        RETURN NEW;
+        
+    ELSE
+
+        INSERT INTO log_empresa (
+            id_empresa,
+            tipo_mudanca,
+            data_hora_mudanca,
+            usuario_responsavel,
+            descricao
+        )
+        VALUES (
+            OLD.id,
+            TG_OP,
+            NOW(),
+            CURRENT_USER,
+            'Registro ' || OLD.id ||
+            ' deletado da tabela empresa às ' || NOW()
+        );
+
+        RETURN OLD;
+
+    END IF;
+
+END;
+$$;
+
 CREATE OR REPLACE TRIGGER trg_log_cartao_categoria_beneficio
 AFTER INSERT OR UPDATE OR DELETE ON cartao_categoria_beneficio
 FOR EACH ROW EXECUTE FUNCTION fn_log_cartao_categoria_beneficio();
@@ -1252,6 +1433,14 @@ FOR EACH ROW EXECUTE FUNCTION fn_log_estabelecimento();
 CREATE OR REPLACE TRIGGER trg_log_transacao
 AFTER INSERT OR UPDATE OR DELETE ON transacao
 FOR EACH ROW EXECUTE FUNCTION fn_log_transacao();
+
+CREATE OR REPLACE TRIGGER trg_log_empresa
+AFTER INSERT OR DELETE ON empresa
+FOR EACH ROW EXECUTE FUNCTION fn_log_empresa_insert_delete();
+
+CREATE OR REPLACE TRIGGER trg_log_empresa
+AFTER UPDATE ON empresa
+FOR EACH ROW EXECUTE FUNCTION fn_log_empresa_update();
 
 BEGIN;
 
@@ -3898,3 +4087,241 @@ INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_temp
 INSERT INTO transacao (valor, id_cartao_categoria, id_estabelecimento, data_tempo_transacao, status) VALUES (13.62, 28, 53, '2024-05-18 05:06:07', 'aprovada');
 
 COMMIT;
+
+CREATE VIEW vw_cartao_colaborador AS (
+    SELECT
+        ca.id AS id_cartao,
+        co.nome AS colaborador,
+        co.cpf,
+        ca.numero_cartao,
+        ca.validade,
+        ca.bandeira,
+        ca.tipo_pagamento
+    FROM cartao ca
+    JOIN colaborador co
+    ON ca.id_colaborador = co.id
+);
+
+CREATE VIEW vw_cartoes_vencidos AS (
+    SELECT
+        id,
+        numero_cartao,
+        validade
+    FROM cartao
+    WHERE validade < CURRENT_DATE
+);
+
+CREATE VIEW vw_categoria_mcc AS (
+    SELECT
+        cb.nome AS categoria,
+        m.codigo,
+        m.descricao
+    FROM categoria_beneficio_mcc cbm
+
+    JOIN categoria_beneficio cb
+    ON cbm.id_categoria = cb.id
+
+    JOIN mcc m
+    ON cbm.id_mcc = m.id
+);
+
+CREATE VIEW vw_colaborador_completo AS (
+    SELECT
+        c.id,
+        c.nome,
+        c.cpf,
+        c.telefone,
+        c.email,
+        e.cep,
+        e.rua,
+        e.numero,
+        e.bairro,
+        e.cidade,
+        e.estado,
+        e.complemento
+    FROM colaborador c
+    JOIN endereco e
+    ON c.id_endereco = e.id
+);
+
+CREATE VIEW vw_dashboard_gestor AS (
+    SELECT
+        cb.nome AS categoria_beneficio,
+
+        cb.valor_recarga,
+
+        COUNT(DISTINCT ccb.id_cartao) AS total_cartoes_ativos,
+        COUNT(DISTINCT c.id_colaborador) AS total_colaboradores_utilizando,
+
+        COALESCE(SUM(ccb.saldo), 0) AS saldo_total_disponivel,
+
+        COUNT(t.id) AS quantidade_transacoes,
+        COALESCE(SUM(t.valor), 0) AS valor_total_transacionado,
+        COALESCE(AVG(t.valor), 0) AS ticket_medio,
+
+        COUNT(DISTINCT e.id) AS estabelecimentos_utilizados,
+
+        MAX(t.data_tempo_transacao) AS ultima_transacao,
+
+        CASE
+            WHEN COALESCE(SUM(ccb.saldo), 0) + COALESCE(SUM(t.valor), 0) > 0
+            THEN ROUND(
+                (
+                    COALESCE(SUM(t.valor), 0) /
+                    (
+                        COALESCE(SUM(ccb.saldo), 0) +
+                        COALESCE(SUM(t.valor), 0)
+                    )
+                ) * 100,
+                2
+            )
+            ELSE 0
+        END AS percentual_utilizado
+
+    FROM categoria_beneficio cb
+
+    LEFT JOIN cartao_categoria_beneficio ccb
+    ON ccb.id_categoria_beneficio = cb.id
+    AND ccb.ativo = TRUE
+
+    LEFT JOIN cartao c
+    ON c.id = ccb.id_cartao
+
+    LEFT JOIN transacao t
+    ON t.id_cartao = c.id
+
+    LEFT JOIN estabelecimento e
+    ON e.id = t.id_estabelecimento
+
+    GROUP BY
+        cb.nome,
+        cb.valor_recarga
+);
+
+CREATE VIEW vw_estabelecimento_mcc AS (
+    SELECT
+        e.id,
+        e.nome,
+        e.cnpj,
+        e.telefone,
+        e.email,
+        m.codigo AS codigo_mcc,
+        m.descricao AS descricao_mcc,
+        e.status,
+        e.data_cadastro
+    FROM estabelecimento e
+    JOIN mcc m
+    ON e.id_mcc = m.id
+);
+
+CREATE VIEW vw_estabelecimentos_ativos AS (
+    SELECT *
+    FROM estabelecimento
+    WHERE status = TRUE
+);
+
+CREATE VIEW vw_gasto_categoria AS (
+    SELECT
+        cb.nome AS categoria,
+        SUM(t.valor) AS total_gasto
+    FROM transacao t
+
+    JOIN estabelecimento e
+    ON t.id_estabelecimento = e.id
+
+    JOIN mcc m
+    ON e.id_mcc = m.id
+
+    JOIN categoria_beneficio_mcc cbm
+    ON cbm.id_mcc = m.id
+
+    JOIN categoria_beneficio cb
+    ON cbm.id_categoria = cb.id
+
+    GROUP BY cb.nome;
+);
+
+CREATE VIEW vw_ranking_estabelecimentos AS (
+    SELECT
+        e.nome,
+        COUNT(t.id) AS qtd_transacoes,
+        SUM(t.valor) AS faturamento
+    FROM estabelecimento e
+
+    JOIN transacao t
+    ON t.id_estabelecimento = e.id
+
+    GROUP BY e.nome
+    ORDER BY faturamento DESC
+);
+
+CREATE VIEW vw_saldo_beneficio AS (
+    SELECT
+        ccb.id,
+        co.nome AS colaborador,
+        ca.numero_cartao,
+        cb.nome AS categoria,
+        ccb.saldo,
+        ccb.ativo
+    FROM cartao_categoria_beneficio ccb
+    JOIN cartao ca
+    ON ccb.id_cartao = ca.id
+    JOIN colaborador co
+    ON ca.id_colaborador = co.id
+    JOIN categoria_beneficio cb
+    ON ccb.id_categoria_beneficio = cb.id
+);
+
+CREATE VIEW vw_total_gasto_colaborador AS (
+    SELECT
+        co.id,
+        co.nome,
+        SUM(t.valor) AS total_gasto,
+        COUNT(t.id) AS quantidade_transacoes
+    FROM colaborador co
+
+    JOIN cartao ca
+    ON ca.id_colaborador = co.id
+
+    JOIN transacao t
+    ON t.id_cartao = ca.id
+
+    GROUP BY co.id, co.nome
+);
+
+CREATE VIEW vw_transacoes_completas AS (
+    SELECT
+        t.id,
+        t.valor,
+        t.data_tempo_transacao,
+        
+        co.nome AS colaborador,
+        ca.numero_cartao,
+
+        es.nome AS estabelecimento,
+        es.cnpj,
+
+        m.codigo AS codigo_mcc,
+        m.descricao AS descricao_mcc
+
+    FROM transacao t
+
+    JOIN cartao ca
+    ON t.id_cartao = ca.id
+
+    JOIN colaborador co
+    ON ca.id_colaborador = co.id
+
+    JOIN estabelecimento es
+    ON t.id_estabelecimento = es.id
+
+    JOIN mcc m
+    ON es.id_mcc = m.id
+);
+
+CREATE VIEW vw_transacoes_mes AS (
+      SELECT *
+      FROM transacao
+      WHERE DATE_TRUNC('month', data_tempo_transacao)
+            = DATE_TRUNC('month', CURRENT_DATE)
+);
