@@ -7,5 +7,6 @@ CREATE TABLE estabelecimento (
     status         BOOLEAN                  DEFAULT TRUE,
     data_cadastro  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     id_mcc         INTEGER                  NOT NULL REFERENCES mcc(id),
-    id_endereco    INTEGER                  NOT NULL REFERENCES endereco(id)
+    id_endereco    INTEGER                  NOT NULL REFERENCES endereco(id),
+    id_empresa     INTEGER                  NOT NULL REFERENCES empresa(id)
 );
