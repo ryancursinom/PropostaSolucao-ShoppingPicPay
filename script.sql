@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS endereco                       CASCADE;
 DROP TABLE IF EXISTS colaborador                    CASCADE;
+DROP TABLE IF EXISTS empresa                        CASCADE;
 DROP TABLE IF EXISTS estabelecimento                CASCADE;
 DROP TABLE IF EXISTS cartao                         CASCADE;
 DROP TABLE IF EXISTS mcc                            CASCADE;
@@ -12,6 +13,8 @@ DROP TABLE IF EXISTS log_endereco                   CASCADE;
 DROP TABLE IF EXISTS log_endereco_colaborador       CASCADE;
 DROP TABLE IF EXISTS log_endereco_estabelecimento   CASCADE;
 DROP TABLE IF EXISTS log_colaborador                CASCADE;
+DROP TABLE IF EXISTS log_empresa                    CASCADE;
+DROP TABLE IF EXISTS log_empresa_estabelecimento    CASCADE;
 DROP TABLE IF EXISTS log_estabelecimento            CASCADE;
 DROP TABLE IF EXISTS log_cartao                     CASCADE;
 DROP TABLE IF EXISTS log_cartao_categoria_beneficio CASCADE;
@@ -21,7 +24,7 @@ DROP TABLE IF EXISTS log_transacao                  CASCADE;
 CREATE TABLE empresa (
     id     SERIAL       PRIMARY KEY
     ,nome   VARCHAR(60) NOT NULL
-)
+);
 
 CREATE TABLE endereco (
     id              SERIAL       PRIMARY KEY,
@@ -4238,7 +4241,7 @@ CREATE VIEW vw_gasto_categoria AS (
     JOIN categoria_beneficio cb
     ON cbm.id_categoria = cb.id
 
-    GROUP BY cb.nome;
+    GROUP BY cb.nome
 );
 
 CREATE VIEW vw_ranking_estabelecimentos AS (
@@ -4324,4 +4327,59 @@ CREATE VIEW vw_transacoes_mes AS (
       FROM transacao
       WHERE DATE_TRUNC('month', data_tempo_transacao)
             = DATE_TRUNC('month', CURRENT_DATE)
+);
+
+CREATE OR REPLACE VIEW vw_empresas AS (
+    SELECT
+        e.id AS id_empresa,
+        e.nome AS empresa,
+        SUM(t.valor) AS valor_total_transacoes,
+        COUNT(DISTINCT t.id) AS quantidade_transacoes,
+        AVG(t.valor) OVER(
+            PARTITION BY e.id
+        ) AS media_valor_transacoes,
+        COUNT(DISTINCT es.id) AS quantidade_estabelecimentos
+    FROM
+        empresa e
+    JOIN
+        estabelecimento es
+        ON es.id_empresa = e.id
+    JOIN
+        transacao t
+        ON t.id_estabelecimento = es.id
+
+    WHERE
+        t.status = 'concluida'
+
+    GROUP BY e.id, e.nome
+    ORDER BY e.nome ASC
+);
+
+CREATE VIEW vw_empresas_categoria AS (
+    SELECT
+        e.id AS id_empresa,
+        e.nome AS empresa,
+        cb.nome AS categoria,
+        SUM(t.valor) AS valor_total_transacoes,
+        COUNT(DISTINCT t.id) AS quantidade_transacoes,
+        AVG(t.valor) OVER(
+            PARTITION BY e.id, cb.id
+        ) AS media_valor_transacoes
+    FROM
+        empresa e
+    JOIN
+        estabelecimento es
+        ON es.id_empresa = e.id
+    JOIN
+        transacao t
+        ON t.id_estabelecimento = es.id
+    JOIN
+        cartao_categoria_beneficio ccb
+        ON ccb.id = t.id_cartao_categoria
+    JOIN
+        categoria_beneficio cb
+        ON cb.id = ccb.id_categoria_beneficio
+
+    GROUP BY e.id, e.nome, cb.id, cb.nome
+    ORDER BY e.nome ASC, cb.nome ASC
 );
