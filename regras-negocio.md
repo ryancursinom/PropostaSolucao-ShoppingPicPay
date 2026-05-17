@@ -122,22 +122,28 @@ O sistema utiliza:
 ## 8. Regras de Automação 
 
 ### 8.1 Function
-Responsável por validar:
-* adicionar explicação das functions
+Responsável por:
+- Validar se a transação está correta antes de inserir no banco (MCC e saldo combinam com a compra)
+- Validar código MCC para confirmar uma transação.
+- Preencher as tabelas de Log, inserindo quem fez a ação, qual ação foi realizada e os campos que foram alterados em caso de update.
 
 ---
 
 ### 8.2 Trigger
 Responsável por:
-* adicionar explicação das triggers
+- Validar se a transação está correta antes de inserir no banco (MCC e saldo combinam com a compra)
+- Preencher as tabelas de Log, inserindo quem fez a ação, qual ação foi realizada e os campos que foram alterados em caso de update.
 
 
 ---
 
 ### 8.3 Procedure
 Responsável por:
-* adicionar explicação das procedures
-
+- Fazer a recarga mensal do **Vale Alimentação (VA)**
+- Fazer a recarga mensal do **Vale Refeição (VR)**
+- Fazer a recarga mensal do **Vale Transporte (VT)**
+- Processar a recarga do VA no quinto dia útil, porém não vamos colocar ele no script final pois sua utilidade só aparece junto com os códigos presentes na pasta **schedules**.
+- Processar a recarga do VT no primeiro dia útil, porém não vamos colocar ele no script final pois sua utilidade só aparece junto com os códigos presentes na pasta **schedules**.
 
 ---
 
