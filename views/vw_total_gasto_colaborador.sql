@@ -12,8 +12,11 @@ CREATE VIEW vw_total_gasto_colaborador AS (
     JOIN cartao ca
     ON ca.id_colaborador = co.id
 
+    JOIN cartao_categoria_beneficio ccb
+    ON ccb.id_cartao = ca.id
+
     JOIN transacao t
-    ON t.id_cartao = ca.id
+    ON t.id_cartao_categoria = ca.id
 
     GROUP BY co.id, co.nome
 );

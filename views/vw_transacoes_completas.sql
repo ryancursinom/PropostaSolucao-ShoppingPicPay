@@ -18,8 +18,11 @@ CREATE VIEW vw_transacoes_completas AS (
 
     FROM transacao t
 
+    JOIN cartao_categoria_beneficio ccb
+    ON t.id_cartao_categoria = ccb.id
+
     JOIN cartao ca
-    ON t.id_cartao = ca.id
+    ON ccb.id_cartao = ca.id
 
     JOIN colaborador co
     ON ca.id_colaborador = co.id

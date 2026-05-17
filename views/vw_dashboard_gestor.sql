@@ -42,7 +42,7 @@ CREATE VIEW vw_dashboard_gestor AS (
     ON c.id = ccb.id_cartao
 
     LEFT JOIN transacao t
-    ON t.id_cartao = c.id
+    ON t.id_cartao_categoria = ccb.id
 
     LEFT JOIN estabelecimento e
     ON e.id = t.id_estabelecimento
