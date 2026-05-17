@@ -125,14 +125,14 @@ O sistema utiliza:
 Responsável por:
 - Validar se a transação está correta antes de inserir no banco (MCC e saldo combinam com a compra)
 - Validar código MCC para confirmar uma transação.
-- Preencher nas tabelas de Log, inserindo quem fez a ação, qual ação foi realizada e os campos que foram alterados em caso de update.
+- Preencher as tabelas de Log, inserindo quem fez a ação, qual ação foi realizada e os campos que foram alterados em caso de update.
 
 ---
 
 ### 8.2 Trigger
 Responsável por:
 - Validar se a transação está correta antes de inserir no banco (MCC e saldo combinam com a compra)
-- Preencher nas tabelas de Log, inserindo quem fez a ação, qual ação foi realizada e os campos que foram alterados em caso de update.
+- Preencher as tabelas de Log, inserindo quem fez a ação, qual ação foi realizada e os campos que foram alterados em caso de update.
 
 
 ---
