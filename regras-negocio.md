@@ -149,8 +149,52 @@ Responsável por:
 
 ### 8.4 View
 Responsável por:
-* adicionar explicação das views
+## 8.4 Views - Explicações
 
+- **vw_cartao_colaborador**  
+  View que relaciona cartões aos seus respectivos colaboradores, permitindo visualizar rapidamente quem é o titular de cada cartão.
+
+- **vw_cartoes_vencidos**  
+  View utilizada para identificar cartões cuja validade já expirou, auxiliando no controle e manutenção do sistema.
+
+- **vw_categoria_mcc**  
+  View que relaciona categorias de benefício aos códigos MCC permitidos, auxiliando na validação das regras de utilização dos benefícios.
+
+- **vw_colaborador_completo**  
+  View responsável por reunir os dados pessoais do colaborador junto às informações de endereço, facilitando consultas completas sem necessidade de múltiplos JOINs.
+
+- **vw_dashboard_gestor**  
+  View consolidada para painel gerencial, reunindo informações estratégicas como empresas, categorias e indicadores de desempenho.
+
+- **vw_empresas**  
+  View que consolida informações gerais das empresas, incluindo dados agregados de transações e estrutura organizacional.
+
+- **vw_empresas_categoria**  
+  View que analisa o desempenho das empresas por categoria, permitindo visualizar volume e valor de transações segmentadas.
+
+- **vw_estabelecimento_mcc**  
+  View que exibe os estabelecimentos juntamente com seus respectivos códigos MCC e descrições de categoria comercial.
+
+- **vw_estabelecimentos_ativos**  
+  View que retorna apenas os estabelecimentos ativos no sistema, simplificando consultas operacionais.
+
+- **vw_gasto_categoria**  
+  View responsável por consolidar os gastos realizados em cada categoria de benefício com base nos MCCs associados.
+
+- **vw_ranking_estabelecimentos**  
+  View que gera um ranking de estabelecimentos com base na quantidade de transações e no faturamento movimentado.
+
+- **vw_saldo_beneficio**  
+  View utilizada para consultar os saldos disponíveis de cada categoria de benefício vinculada aos cartões dos colaboradores.
+
+- **vw_total_gasto_colaborador**  
+  View que calcula o total gasto e a quantidade de transações realizadas por cada colaborador.
+
+- **vw_transacoes_completas**  
+  View analítica que centraliza informações das transações, incluindo colaborador, cartão, estabelecimento e MCC em uma única consulta.
+
+- **vw_transacoes_mes**  
+  View que filtra automaticamente as transações realizadas no mês atual, facilitando relatórios mensais e dashboards.
 ---
 
 ## 9. Requisitos Técnicos do Projeto
