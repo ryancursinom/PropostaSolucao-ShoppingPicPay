@@ -2,8 +2,6 @@ CREATE VIEW vw_dashboard_gestor AS (
     SELECT
         cb.nome AS categoria_beneficio,
 
-        cb.valor_recarga,
-
         COUNT(DISTINCT ccb.id_cartao) AS total_cartoes_ativos,
         COUNT(DISTINCT c.id_colaborador) AS total_colaboradores_utilizando,
 
@@ -48,6 +46,5 @@ CREATE VIEW vw_dashboard_gestor AS (
     ON e.id = t.id_estabelecimento
 
     GROUP BY
-        cb.nome,
-        cb.valor_recarga
+        cb.nome
 );
